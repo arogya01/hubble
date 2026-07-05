@@ -1,10 +1,12 @@
 import json 
 from pathlib import Path 
 
-PROJECT_ROOT = Path(__file__).resolve().parents(2)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = PROJECT_ROOT / "data" / "movies.json" 
+STOPWORDS_PATH = PROJECT_ROOT / "data" / "stopwords.txt" 
 
-def load_movies() -> List[dict]: 
+
+def load_movies() -> list[dict]: 
     try: 
         with open(DATA_PATH, "r") as file: 
             data = json.load(file)
@@ -12,3 +14,10 @@ def load_movies() -> List[dict]:
     except FileNotFoundError: 
         return { "movies": [] } 
 
+
+def load_stopwords() -> list[str]: 
+    try:
+        with open(STOPWORDS_PATH, "r") as file: 
+            return [line.strip() for line in file] 
+    except FileNotFoundError: 
+        return []
