@@ -2,6 +2,9 @@
 import json 
 import string
 from lib.search_utils import load_movies, load_stopwords
+from nltk.stem import PorterStemmer
+
+stemmer = PorterStemmer()
 
 def clean_text(text:str) -> str:
     return text.lower().translate(str.maketrans('','',string.punctuation))
@@ -10,7 +13,7 @@ def tokenize_text(text:str) -> list[str]:
     text = clean_text(text)
     words = text.split()
     stopwords = load_stopwords()
-    filtered = [word for word in words if word not in stopwords]
+    filtered = [stemmer.stem(word) for word in words if word not in stopwords]
     return filtered 
 
 def has_matching_token(query_toks:list[str],movie_toks:list[str]) -> bool:
