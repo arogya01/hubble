@@ -5,7 +5,7 @@ import pickle
 
 from lib.search_utils import load_movies, load_stopwords, CACHE_PATH
 from nltk.stem import PorterStemmer
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 
 stemmer = PorterStemmer()
@@ -15,12 +15,15 @@ class InvertedIndex:
     def __init__(self):
         self.index = defaultdict(set) 
         self.docmap = defaultdict(set) 
+        self.term_freq = defaultdict(Counter)
         self.index_path = CACHE_PATH / 'index.pkl'
         self.docmap_path = CACHE_PATH / 'docmap.pkl'    
+        self.term_freq_path = CACHE_PATH / 'term_freq.pkl'
     
     def __add_document(self, doc_id, text): 
         tokens = tokenize_text(text)
-        for token in set(tokens):
+        for token in tokens: 
+            self.term_freq[doc_id][token] += 1
             self.index[token].add(doc_id)
     
     def get_documents(self, term): 
@@ -34,6 +37,9 @@ class InvertedIndex:
             self.__add_document(doc_id, text)
             self.docmap[doc_id] = movie  
     
+    def get_tf(self,doc_id,term):
+        return self.term_freq.get(doc_id,{}).get(term,0)
+    
     def load(self): 
         if not self.index_path.exists() or not self.docmap_path.exists(): 
             raise FileNotFoundError('Index files not found')
@@ -41,6 +47,8 @@ class InvertedIndex:
             self.index = pickle.load(f)
         with open(self.docmap_path, 'rb') as f: 
             self.docmap = pickle.load(f)
+        with open(self.term_freq_path, 'rb') as f: 
+            self.term_freq = pickle.load(f)
 
 
     def save(self): 
@@ -52,9 +60,17 @@ class InvertedIndex:
         with open(self.docmap_path, 'wb') as f: 
             pickle.dump(self.docmap, f)
 
+        with open(self.term_freq_path, 'wb') as f: 
+            pickle.dump(self.term_freq, f)
 
 
 
+
+def tokenize_single_term(term): 
+    tok = tokenize_text(term)
+    if len(tok) != 1: 
+        raise ValueError(f"Term '{term}' must result in exactly 1 token, got {len(tok)}")
+    return tok[0]
 
 def clean_text(text:str) -> str:
     return text.lower().translate(str.maketrans('','',string.punctuation))
