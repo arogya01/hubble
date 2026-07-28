@@ -9,10 +9,17 @@ def main() -> None:
     search_parser = subparsers.add_parser("search", help="Search movies using keywords")
     build_inverted_index = subparsers.add_parser("build", help="load the movie data")     
     tf_inverted_index = subparsers.add_parser("tf",help="get the term freq")
+    idf_parser = subparsers.add_parser("idf",help="Calculate IDF for a term")
+    tfidf_parser=subparsers.add_parser("tfidf",help="Calculate the TFIDF for a term")
     
     search_parser.add_argument("query", type=str, help="Search query")
     tf_inverted_index.add_argument("doc_id", type=int, help = "Document ID")
     tf_inverted_index.add_argument("term", type=str, help="Search term")
+    idf_parser.add_argument("term", type=str, help="calculate the TF-IDF for the term")
+    tfidf_parser.add_argument("doc_id", type=int, help="Document ID")
+    tfidf_parser.add_argument("term", type=str, help="Search term")
+
+
 
     args = parser.parse_args()
 
@@ -31,6 +38,20 @@ def main() -> None:
             clean_token = tokenize_single_term(args.term)
             tf_count = index.get_tf(args.doc_id,clean_token)
             print(tf_count)
+        case "idf": 
+            index = InvertedIndex()
+            index.load()
+            clean_token = tokenize_single_term(args.term)
+            idf = index.get_idf(clean_token)
+            print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
+        case "tfidf":
+            index = InvertedIndex()
+            index.load()
+            clean_token = tokenize_single_term(args.term)
+            tf = index.get_tf(args.doc_id,clean_token)
+            idf = index.get_idf(clean_token)
+            tf_idf = tf * idf
+            print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
         case _:
             parser.print_help()
 

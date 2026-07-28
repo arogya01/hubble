@@ -2,6 +2,7 @@ import json
 import string
 import os 
 import pickle
+import math
 
 from lib.search_utils import load_movies, load_stopwords, CACHE_PATH
 from nltk.stem import PorterStemmer
@@ -9,7 +10,6 @@ from collections import defaultdict, Counter
 
 
 stemmer = PorterStemmer()
-
 
 class InvertedIndex: 
     def __init__(self):
@@ -39,6 +39,12 @@ class InvertedIndex:
     
     def get_tf(self,doc_id,term):
         return self.term_freq.get(doc_id,{}).get(term,0)
+    
+    def get_idf(self, term: str) -> float:
+        total_doc_count = len(self.docmap)
+        term_match_doc_count = len(self.get_documents(term))
+        return math.log((total_doc_count + 1) / (term_match_doc_count + 1))
+
     
     def load(self): 
         if not self.index_path.exists() or not self.docmap_path.exists(): 
