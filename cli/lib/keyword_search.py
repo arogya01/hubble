@@ -7,9 +7,10 @@ import math
 from lib.search_utils import load_movies, load_stopwords, CACHE_PATH
 from nltk.stem import PorterStemmer
 from collections import defaultdict, Counter
-
-
 stemmer = PorterStemmer()
+
+
+BM25_K1 = 1.5
 
 class InvertedIndex: 
     def __init__(self):
@@ -45,7 +46,15 @@ class InvertedIndex:
         term_match_doc_count = len(self.get_documents(term))
         return math.log((total_doc_count + 1) / (term_match_doc_count + 1))
 
-    
+    def get_bm25_idf(self, term:str) -> float:
+        total_doc_count = len(self.docmap)
+        term_match_doc_count = len(self.get_documents(term))
+        return math.log((total_doc_count - term_match_doc_count + 0.5) / (term_match_doc_count + 0.5) + 1)        
+
+    def get_bm25_tf(self, doc_id, term:str, k1 = BM25_K1) -> float: 
+        tf = self.get_tf(doc_id, term)
+        return (tf * (k1 + 1)) / (tf + k1)
+
     def load(self): 
         if not self.index_path.exists() or not self.docmap_path.exists(): 
             raise FileNotFoundError('Index files not found')
