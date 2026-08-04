@@ -11,21 +11,26 @@ stemmer = PorterStemmer()
 
 
 BM25_K1 = 1.5
+BM25_B = 0.75
+
 
 class InvertedIndex: 
     def __init__(self):
         self.index = defaultdict(set) 
         self.docmap = defaultdict(set) 
         self.term_freq = defaultdict(Counter)
+        self.doc_lengths = defaultdict(Counter)
         self.index_path = CACHE_PATH / 'index.pkl'
         self.docmap_path = CACHE_PATH / 'docmap.pkl'    
         self.term_freq_path = CACHE_PATH / 'term_freq.pkl'
+        self.doc_lengths_path = CACHE_PATH / "doc_lengths.pkl"
     
     def __add_document(self, doc_id, text): 
         tokens = tokenize_text(text)
         for token in tokens: 
             self.term_freq[doc_id][token] += 1
             self.index[token].add(doc_id)
+        self.doc_lengths[doc_id] = len(tokens)
     
     def get_documents(self, term): 
         return sorted(self.index.get(term, []))
@@ -49,11 +54,21 @@ class InvertedIndex:
     def get_bm25_idf(self, term:str) -> float:
         total_doc_count = len(self.docmap)
         term_match_doc_count = len(self.get_documents(term))
-        return math.log((total_doc_count - term_match_doc_count + 0.5) / (term_match_doc_count + 0.5) + 1)        
+        return math.log((total_doc_count - term_match_doc_count + 0.5) / (term_match_doc_count + 0.5) + 1)     
 
-    def get_bm25_tf(self, doc_id, term:str, k1 = BM25_K1) -> float: 
+    def 
+
+    def __get_avg_doc_length(self) -> float: 
+        if len(self.doc_lengths) == 0:
+            return 0.0
+        return sum(self.doc_lengths.values()) / len(self.doc_lengths)
+
+    def get_bm25_tf(self, doc_id, term:str, k1 = BM25_K1, b = BM25_B) -> float: 
         tf = self.get_tf(doc_id, term)
-        return (tf * (k1 + 1)) / (tf + k1)
+        doc_length = self.doc_lengths[doc_id]
+        avg_doc_length = self.__get_avg_doc_length()
+        length_norm = 1 - b + b * (doc_length / avg_doc_length)
+        return (tf * (k1 + 1)) / (tf + k1 * length_norm)
 
     def load(self): 
         if not self.index_path.exists() or not self.docmap_path.exists(): 
@@ -64,6 +79,8 @@ class InvertedIndex:
             self.docmap = pickle.load(f)
         with open(self.term_freq_path, 'rb') as f: 
             self.term_freq = pickle.load(f)
+        with open(self.doc_lengths_path, 'rb') as f: 
+            self.doc_lengths = pickle.load(f)
 
 
     def save(self): 
@@ -77,6 +94,9 @@ class InvertedIndex:
 
         with open(self.term_freq_path, 'wb') as f: 
             pickle.dump(self.term_freq, f)
+        
+        with open(self.doc_lengths_path, 'wb') as f: 
+            pickle.dump(self.doc_lengths, f)
 
 
 
