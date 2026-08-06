@@ -16,6 +16,13 @@ def main() -> None:
     bm25_tf_parser = subparsers.add_parser(
     "bm25tf", help="Get BM25 TF score for a given document ID and term"
     )
+    bm25search_parser = subparsers.add_parser(
+    "bm25search", help="Search movies using full BM25 scoring"
+)
+    bm25search_parser.add_argument("query", type=str, help="Search query")
+    bm25search_parser.add_argument(
+        "--limit", type=int, default=5, help="Number of results to return"
+    )
     bm25_tf_parser.add_argument("doc_id", type=int, help="Document ID")
     bm25_tf_parser.add_argument("term", type=str, help="Term to get BM25 TF score for")
     bm25_tf_parser.add_argument(
@@ -35,49 +42,55 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    match args.command:
-        case "search":
-             # print the search query 
-           keyword_search(query=args.query)               
-        case "build": 
-            index = InvertedIndex()
-            index.build()                    
-            index.save()
-            docs = index.get_documents('merida')
-        case "tf": 
-            index = InvertedIndex()
-            index.load()
-            clean_token = tokenize_single_term(args.term)
-            tf_count = index.get_tf(args.doc_id,clean_token)
-            print(tf_count)
-        case "idf": 
-            index = InvertedIndex()
-            index.load()
-            clean_token = tokenize_single_term(args.term)
-            idf = index.get_idf(clean_token)
-            print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
-        case "tfidf":
-            index = InvertedIndex()
-            index.load()
-            clean_token = tokenize_single_term(args.term)
-            tf = index.get_tf(args.doc_id,clean_token)
-            idf = index.get_idf(clean_token)
-            tf_idf = tf * idf
-            print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
-        case "bm25idf": 
-            index = InvertedIndex()
-            index.load()
-            clean_token = tokenize_single_term(args.term)
-            bm25idf = index.get_bm25_idf(clean_token)
-            print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
-        case "bm25tf": 
-            index = InvertedIndex()
-            index.load()
-            clean_token = tokenize_single_term(args.term)
-            bm25tf = index.get_bm25_tf(args.doc_id, clean_token, args.k1)
-            print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25tf:.2f}")
-        case _:
-            parser.print_help()
+    if args.command == "search":
+        # print the search query 
+        keyword_search(query=args.query)               
+    elif args.command == "build": 
+        index = InvertedIndex()
+        index.build()                    
+        index.save()
+        docs = index.get_documents('merida')
+    elif args.command == "tf": 
+        index = InvertedIndex()
+        index.load()
+        clean_token = tokenize_single_term(args.term)
+        tf_count = index.get_tf(args.doc_id,clean_token)
+        print(tf_count)
+    elif args.command == "idf": 
+        index = InvertedIndex()
+        index.load()
+        clean_token = tokenize_single_term(args.term)
+        idf = index.get_idf(clean_token)
+        print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
+    elif args.command == "tfidf":
+        index = InvertedIndex()
+        index.load()
+        clean_token = tokenize_single_term(args.term)
+        tf = index.get_tf(args.doc_id,clean_token)
+        idf = index.get_idf(clean_token)
+        tf_idf = tf * idf
+        print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
+    elif args.command == "bm25idf": 
+        index = InvertedIndex()
+        index.load()
+        clean_token = tokenize_single_term(args.term)
+        bm25idf = index.get_bm25_idf(clean_token)
+        print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
+    elif args.command == "bm25tf": 
+        index = InvertedIndex()
+        index.load()
+        clean_token = tokenize_single_term(args.term)
+        bm25tf = index.get_bm25_tf(args.doc_id, clean_token, args.k1)
+        print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25tf:.2f}")            
+    elif args.command == "bm25search": 
+        index = InvertedIndex() 
+        index.load()
+        results = index.bm25_search(args.query, limit=args.limit)
+        for i, (doc_id, score) in enumerate(results, start=1):
+            title = index.docmap[doc_id]["title"]
+            print(f"{i}. ({doc_id}) {title} - Score: {score:.2f}")
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()

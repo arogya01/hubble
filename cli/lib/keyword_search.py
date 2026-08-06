@@ -54,9 +54,28 @@ class InvertedIndex:
     def get_bm25_idf(self, term:str) -> float:
         total_doc_count = len(self.docmap)
         term_match_doc_count = len(self.get_documents(term))
-        return math.log((total_doc_count - term_match_doc_count + 0.5) / (term_match_doc_count + 0.5) + 1)     
+        return math.log((total_doc_count - term_match_doc_count + 0.5) / (term_match_doc_count + 0.5) + 1)  
 
-    def 
+    def bm25_search(self, query, limit = 5): 
+        # for every query we're getting a bm25 score. 
+        query_tokens = tokenize_text(query)
+        scores = {}
+        for doc_id in self.docmap: 
+            total_score = 0.0 
+
+            for token in query_tokens: 
+                total_score += self.bm25(doc_id, token)
+        
+            scores[doc_id] = total_score
+        
+        sorted_docs = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+        return sorted_docs[:limit]
+
+
+
+    def bm25(self, doc_id, term):
+        return self.get_bm25_tf(doc_id, term) * self.get_bm25_idf(term)
 
     def __get_avg_doc_length(self) -> float: 
         if len(self.doc_lengths) == 0:
