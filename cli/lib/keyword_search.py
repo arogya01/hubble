@@ -75,7 +75,7 @@ class InvertedIndex:
 
 
     def bm25(self, doc_id, term):
-        return self.get_bm25_tf(doc_id, term) * self.get_bm25_idf(term)
+        return round(self.get_bm25_tf(doc_id, term) * self.get_bm25_idf(term), 2)
 
     def __get_avg_doc_length(self) -> float: 
         if len(self.doc_lengths) == 0:
