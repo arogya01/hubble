@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The History & Evolution of Semantic Search (1950s – Present)</title>
+    <meta name="description" content="A comprehensive deep-research interactive guide tracing 70+ years of Information Retrieval and Semantic Search, from TF-IDF and LSA to Word2Vec, BERT, DPR, ColBERT, Vector Databases, and RAG.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --ink: #0c0a09;
+            --paper: #faf6f1;
+            --paper-warm: #f5ede3;
+            --parchment: #ece4d8;
+            --text-body: #292524;
+            --text-secondary: #78716c;
+            --text-faint: #a8a29e;
+            --rust: #c2410c;
+            --rust-light: #fb923c;
+            --teal: #0d9488;
+            --teal-deep: #115e59;
+            --navy: #1e3a5f;
+            --navy-light: #3b82f6;
+            --plum: #7e22ce;
+            --plum-light: #a855f7;
+            --crimson: #be123c;
+            --gold: #a16207;
+            --gold-light: #eab308;
+            --border: rgba(12, 10, 9, 0.1);
+            --border-strong: rgba(12, 10, 9, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--paper);
+            color: var(--text-body);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Grain Overlay ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── Layout ── */
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
+
+        /* ──────────────────── HERO ──────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            padding: 80px 0 60px 0;
+        }
+
+        .hero-canvas-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--rust);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hero-eyebrow::before {
+            content: '';
+            width: 48px;
+            height: 2px;
+            background: var(--rust);
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 7vw, 6.5rem);
+            font-weight: 900;
+            line-height: 1.0;
+            letter-spacing: -2px;
+            color: var(--ink);
+            max-width: 900px;
+            margin-bottom: 32px;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--rust);
+        }
+
+        .hero-sub {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            line-height: 1.8;
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-stat-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--ink);
+            line-height: 1;
+        }
+
+        .hero-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-faint);
+            margin-top: 6px;
+        }
+
+        /* ── Horizontal Era Nav ── */
+        .era-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(250, 246, 241, 0.92);
+            backdrop-filter: blur(16px) saturate(1.4);
+            border-bottom: 1px solid var(--border);
+            padding: 0;
+        }
+
+        .era-nav-inner {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .era-nav-inner::-webkit-scrollbar { display: none; }
+
+        .era-tab {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 18px 24px;
+            color: var(--text-faint);
+            border: none;
+            background: none;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.25s;
+        }
+
+        .era-tab:hover { color: var(--text-body); }
+
+        .era-tab.active {
+            color: var(--rust);
+            border-bottom-color: var(--rust);
+        }
+
+        .search-slot {
+            margin-left: auto;
+            padding: 10px 0;
+            flex-shrink: 0;
+        }
+
+        .search-slot input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            color: var(--text-body);
+            width: 260px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-slot input:focus {
+            border-color: var(--rust);
+        }
+
+        /* ──────────────────── DEMOS ──────────────────── */
+        .demos {
+            padding: 80px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 860px) { .demos { grid-template-columns: 1fr; } }
+
+        .demo-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .demo-head {
+            padding: 24px 28px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .demo-head h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .demo-head p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .demo-body {
+            padding: 20px 28px 28px;
+        }
+
+        .canvas-wrap {
+            width: 100%;
+            height: 280px;
+            background: var(--ink);
+            border-radius: 2px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .demo-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .dbtn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 7px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 2px;
+            background: var(--paper);
+            color: var(--text-body);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dbtn:hover {
+            background: var(--ink);
+            color: white;
+            border-color: var(--ink);
+        }
+
+        /* Compare Search */
+        .compare-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .compare-row input {
+            flex: 1;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            padding: 10px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 2px;
+            background: white;
+            color: var(--text-body);
+            outline: none;
+        }
+
+        .compare-row input:focus { border-color: var(--teal); }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .compare-col-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .bm25-accent { color: var(--rust); }
+        .vec-accent { color: var(--teal); }
+
+        .r-item {
+            font-size: 0.8rem;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: var(--paper-warm);
+            border-left: 3px solid transparent;
+            border-radius: 0 2px 2px 0;
+            line-height: 1.5;
+        }
+
+        .r-item.hit-lex { border-left-color: var(--rust); background: rgba(194, 65, 12, 0.06); }
+        .r-item.hit-sem { border-left-color: var(--teal); background: rgba(13, 148, 136, 0.06); }
+        .r-item.miss { opacity: 0.45; border-left-color: var(--text-faint); }
+
+        .r-item strong {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+        }
+
+        /* ──────────────────── TIMELINE ──────────────────── */
+        .tl-section {
+            padding: 60px 0 80px;
+        }
+
+        .tl-section-head {
+            margin-bottom: 56px;
+        }
+
+        .tl-section-head h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 900;
+            color: var(--ink);
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .tl-section-head p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+        }
+
+        /* Timeline spine */
+        .tl {
+            position: relative;
+            padding-left: 80px;
+        }
+
+        .tl::before {
+            content: '';
+            position: absolute;
+            left: 32px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom, var(--rust), var(--plum), var(--teal));
+        }
+
+        .tl-entry {
+            position: relative;
+            margin-bottom: 64px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s cubic-bezier(.16,1,.3,1), transform 0.6s cubic-bezier(.16,1,.3,1);
+        }
+
+        .tl-entry.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -80px;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tl-dot::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--paper);
+            border: 2px solid var(--rust);
+            position: absolute;
+        }
+
+        .tl-dot::after {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 8px;
+            width: 30px;
+            height: 1px;
+            background: var(--border-strong);
+        }
+
+        .tl-entry[data-era="2"] .tl-dot::before { border-color: var(--crimson); }
+        .tl-entry[data-era="3"] .tl-dot::before { border-color: var(--plum); }
+        .tl-entry[data-era="4"] .tl-dot::before { border-color: var(--navy); }
+        .tl-entry[data-era="5"] .tl-dot::before { border-color: var(--teal); }
+
+        .tl-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 32px 36px;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .tl-card:hover {
+            box-shadow: 0 16px 48px rgba(12, 10, 9, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .tl-meta {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tl-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--rust);
+            letter-spacing: 1px;
+        }
+
+        .tl-entry[data-era="2"] .tl-year { color: var(--crimson); }
+        .tl-entry[data-era="3"] .tl-year { color: var(--plum); }
+        .tl-entry[data-era="4"] .tl-year { color: var(--navy); }
+        .tl-entry[data-era="5"] .tl-year { color: var(--teal); }
+
+        .tl-era-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 3px 10px;
+            border-radius: 2px;
+        }
+
+        .era-tag-1 { background: rgba(194, 65, 12, 0.08); color: var(--rust); }
+        .era-tag-2 { background: rgba(190, 18, 60, 0.08); color: var(--crimson); }
+        .era-tag-3 { background: rgba(126, 34, 206, 0.08); color: var(--plum); }
+        .era-tag-4 { background: rgba(30, 58, 95, 0.08); color: var(--navy); }
+        .era-tag-5 { background: rgba(13, 148, 136, 0.08); color: var(--teal); }
+
+        .tl-authors {
+            font-size: 0.82rem;
+            color: var(--text-faint);
+            font-style: italic;
+        }
+
+        .tl-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .tl-body {
+            font-size: 0.94rem;
+            color: var(--text-body);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .tl-body p { margin-bottom: 12px; }
+
+        .tl-math {
+            background: var(--ink);
+            color: #e2e8f0;
+            padding: 16px 22px;
+            border-radius: 2px;
+            margin: 16px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            overflow-x: auto;
+            border-left: 3px solid var(--rust);
+        }
+
+        .tl-insight {
+            display: flex;
+            gap: 14px;
+            padding: 14px 18px;
+            background: var(--paper-warm);
+            border-radius: 2px;
+            border-left: 3px solid var(--teal);
+            font-size: 0.88rem;
+            color: var(--teal-deep);
+            line-height: 1.6;
+        }
+
+        .tl-insight-warn { border-left-color: var(--rust); color: var(--rust); }
+
+        .tl-insight-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        /* ──────────────────── COMPARISON TABLE ──────────────────── */
+        .table-section {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .table-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .table-section > p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
+        }
+
+        .tbl-wrap {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 16px 20px;
+            text-align: left;
+            color: var(--text-faint);
+            border-bottom: 2px solid var(--border);
+            background: var(--paper-warm);
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            color: var(--text-body);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr:hover td { background: rgba(250, 246, 241, 0.6); }
+
+        .tt {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            background: var(--ink);
+            color: var(--paper);
+            border-radius: 2px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* ──────────────────── FOOTER ──────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.6rem; letter-spacing: -1px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-val { font-size: 2rem; }
+            .tl { padding-left: 50px; }
+            .tl::before { left: 16px; }
+            .tl-dot { left: -50px; }
+            .tl-dot::after { width: 16px; }
+            .tl-card { padding: 24px; }
+            .tl-title { font-size: 1.2rem; }
+            .era-tab { padding: 14px 16px; font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <canvas id="heroParticles" class="hero-canvas-bg"></canvas>
+        <div class="wrap hero-content">
+            <div class="hero-eyebrow">Deep Research Synthesis</div>
+            <h1>The Evolution of <em>Semantic Search</em></h1>
+            <p class="hero-sub">From Luhn's 1957 term-frequency counters to 2020s Retrieval-Augmented Generation — tracing how machines learned to understand meaning, not just match keywords.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-val">70+</div>
+                    <div class="hero-stat-label">Years of Evolution</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-val">5</div>
+                    <div class="hero-stat-label">Paradigm Eras</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-val">TF-IDF→RAG</div>
+                    <div class="hero-stat-label">Algorithmic Arc</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── STICKY ERA NAV ── -->
+    <nav class="era-nav">
+        <div class="wrap era-nav-inner">
+            <button class="era-tab active" data-era="all">All</button>
+            <button class="era-tab" data-era="1">I · Lexical IR</button>
+            <button class="era-tab" data-era="2">II · Latent Semantics</button>
+            <button class="era-tab" data-era="3">III · Neural Vectors</button>
+            <button class="era-tab" data-era="4">IV · Transformers</button>
+            <button class="era-tab" data-era="5">V · RAG & Vector DBs</button>
+            <div class="search-slot">
+                <input type="text" id="timelineSearch" placeholder="Filter: BM25, BERT, ColBERT…">
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── DEMOS ── -->
+    <section class="wrap demos">
+        <!-- Vector Space Canvas -->
+        <div class="demo-panel">
+            <div class="demo-head">
+                <h3>Vector Embedding Space</h3>
+                <p>2D projection of word embeddings. Cosine similarity drives proximity.</p>
+            </div>
+            <div class="demo-body">
+                <div class="canvas-wrap">
+                    <canvas id="vectorCanvas"></canvas>
+                </div>
+                <div class="demo-btns">
+                    <button class="dbtn" onclick="triggerVectorMath('king-man+woman')">King − Man + Woman = Queen</button>
+                    <button class="dbtn" onclick="triggerVectorMath('synonyms')">Synonyms: Car ↔ Auto</button>
+                    <button class="dbtn" onclick="triggerVectorMath('polysemy')">Polysemy: Bank</button>
+                    <button class="dbtn" onclick="resetCanvas()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lexical vs Semantic -->
+        <div class="demo-panel">
+            <div class="demo-head">
+                <h3>BM25 vs. Dense Vector Retrieval</h3>
+                <p>Observe how exact keyword matching misses semantically relevant passages.</p>
+            </div>
+            <div class="demo-body">
+                <div class="compare-row">
+                    <input type="text" id="demoQueryInput" value="how to fix a flat tire" placeholder="Try: 'automobile repair', 'bank interest'…">
+                    <button class="dbtn" onclick="runSimulatedSearch()">Search</button>
+                </div>
+                <div class="compare-grid">
+                    <div>
+                        <div class="compare-col-title bm25-accent">Lexical (BM25)</div>
+                        <div id="lexicalResults"></div>
+                    </div>
+                    <div>
+                        <div class="compare-col-title vec-accent">Dense Vector</div>
+                        <div id="semanticResults"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ──────────────────── TIMELINE ──────────────────── -->
+    <section class="tl-section">
+        <div class="wrap">
+            <div class="tl-section-head">
+                <h2>Chronological Timeline</h2>
+                <p>The major theoretical and engineering breakthroughs that transformed how machines understand human language.</p>
+            </div>
+
+            <div class="tl" id="timelineContainer">
+
+                <!-- ERA 1 — TF-IDF -->
+                <div class="tl-entry" data-era="1">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">1957 – 1975</span>
+                            <span class="tl-era-tag era-tag-1">Era I · Lexical IR</span>
+                            <span class="tl-authors">H.P. Luhn (IBM), Karen Spärck Jones (Cambridge), Gerard Salton (Cornell)</span>
+                        </div>
+                        <div class="tl-title">Foundations of Information Retrieval: TF, IDF & the Vector Space Model</div>
+                        <div class="tl-body">
+                            <p>Before semantic search, early search engines operated on Boolean logic. In 1957, <strong>Hans Peter Luhn</strong> introduced term frequency (TF) for automatic document indexing. In 1972, <strong>Karen Spärck Jones</strong> introduced <em>Inverse Document Frequency (IDF)</em>, establishing that rare words carry more semantic specificity than frequent words.</p>
+                            <p>In 1975, <strong>Gerard Salton</strong> synthesized these into the <strong>Vector Space Model (VSM)</strong> in the SMART retrieval system, representing documents as high-dimensional sparse vectors indexed by vocabulary words.</p>
+                            <div class="tl-math">
+                                $$\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \log\left(\frac{N}{|\{d \in D : t \in d\}|}\right)$$
+                            </div>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>Historical Significance:</strong> Established term frequency and specificity as mathematical vectors, enabling ranked retrieval via Cosine Similarity for the first time.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 1 — BM25 -->
+                <div class="tl-entry" data-era="1">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">1994</span>
+                            <span class="tl-era-tag era-tag-1">Era I · Lexical IR</span>
+                            <span class="tl-authors">Stephen Robertson & Karen Spärck Jones (TREC-3)</span>
+                        </div>
+                        <div class="tl-title">Okapi BM25: The Gold Standard of Lexical Ranking</div>
+                        <div class="tl-body">
+                            <p>Introduced during the TREC conferences, <strong>Okapi BM25</strong> refined TF-IDF by adding non-linear term frequency saturation and document length normalization, preventing long verbose documents from unfairly dominating search results.</p>
+                            <div class="tl-math">
+                                $$\text{Score}_{\text{BM25}}(D, Q) = \sum_{i=1}^{n} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+                            </div>
+                        </div>
+                        <div class="tl-insight tl-insight-warn">
+                            <span class="tl-insight-icon">▲</span>
+                            <div><strong>Fundamental Limitation:</strong> BM25 suffers from the <em>Vocabulary Mismatch Problem</em>. If a query asks for "car repair" and a document contains "automobile maintenance", BM25 scores a 0 match because tokens do not overlap exact strings.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 2 — LSI -->
+                <div class="tl-entry" data-era="2">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">1990 – 2003</span>
+                            <span class="tl-era-tag era-tag-2">Era II · Latent Semantics</span>
+                            <span class="tl-authors">Deerwester et al. (1990), Thomas Hofmann (1999), Blei, Ng, Jordan (2003)</span>
+                        </div>
+                        <div class="tl-title">Latent Semantic Indexing (LSI/LSA) & Topic Modeling</div>
+                        <div class="tl-body">
+                            <p>To overcome vocabulary mismatch, <strong>Scott Deerwester, Susan Dumais et al. (1990)</strong> invented <strong>Latent Semantic Indexing (LSI)</strong>. Using <em>Singular Value Decomposition (SVD)</em>, LSI factored a huge, sparse term-document matrix \(X\) into lower-rank dense matrices, uncovering latent concepts shared by words.</p>
+                            <p>This was followed by <strong>pLSA (1999)</strong> and <strong>Latent Dirichlet Allocation (LDA, 2003)</strong>, which modeled documents as probabilistic mixtures of latent topics.</p>
+                            <div class="tl-math">
+                                $$X_{m \times n} \approx U_{m \times k} \, \Sigma_{k \times k} \, V_{n \times k}^T$$
+                            </div>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>The Paradigm Shift:</strong> First true semantic representation! Words like "automobile" and "car" mapped to nearby coordinates in the latent concept space even if they didn't appear together in the same document.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 3 — Word2Vec -->
+                <div class="tl-entry" data-era="3">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2013 – 2014</span>
+                            <span class="tl-era-tag era-tag-3">Era III · Neural Vectors</span>
+                            <span class="tl-authors">Tomas Mikolov et al. (Google 2013), Jeffrey Pennington et al. (Stanford 2014)</span>
+                        </div>
+                        <div class="tl-title">Word2Vec & GloVe: Dense Neural Word Embeddings</div>
+                        <div class="tl-body">
+                            <p><strong>Tomas Mikolov et al.</strong> introduced <strong>Word2Vec</strong> (Continuous Bag-of-Words and Skip-Gram models), training 2-layer neural networks on massive text corpora to predict word contexts. In 2014, Stanford introduced <strong>GloVe</strong> using global matrix factorization.</p>
+                            <p>These models mapped words to continuous dense vectors (e.g. 300 dimensions) where spatial distances captured complex semantic relationships and linear vector arithmetic.</p>
+                            <div class="tl-math">
+                                $$\vec{v}_{\text{King}} - \vec{v}_{\text{Man}} + \vec{v}_{\text{Woman}} \approx \vec{v}_{\text{Queen}}$$
+                            </div>
+                        </div>
+                        <div class="tl-insight tl-insight-warn">
+                            <span class="tl-insight-icon">▲</span>
+                            <div><strong>Limitation:</strong> Static word vectors assigned a single static vector to each word string. "Bank" had identical representations whether referring to a river bank or a financial bank.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 3 — HNSW / FAISS -->
+                <div class="tl-entry" data-era="3">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2016 – 2017</span>
+                            <span class="tl-era-tag era-tag-3">Era III · Neural Vectors</span>
+                            <span class="tl-authors">Malkov & Yashunin (HNSW, 2016), Johnson et al. (FAISS, Facebook AI 2017)</span>
+                        </div>
+                        <div class="tl-title">Scale Revolution: HNSW & FAISS Vector Indexing</div>
+                        <div class="tl-body">
+                            <p>Searching millions of high-dimensional vectors sequentially takes \(O(N \cdot d)\) time, which is far too slow for real-time search. In 2016, Malkov & Yashunin created <strong>HNSW (Hierarchical Navigable Small World graphs)</strong>, enabling sub-linear \(O(\log N)\) approximate nearest neighbor (ANN) vector search.</p>
+                            <p>In 2017, Facebook AI released <strong>FAISS</strong>, GPU-accelerating vector similarity search over billions of vectors using Product Quantization (PQ) and Inverted File (IVF) indexes.</p>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>Engineering Impact:</strong> Unlocked millisecond vector retrieval speeds over billion-scale embedding spaces, laying the foundation for modern Vector Databases.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 4 — Transformers & BERT -->
+                <div class="tl-entry" data-era="4">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2017 – 2018</span>
+                            <span class="tl-era-tag era-tag-4">Era IV · Transformers</span>
+                            <span class="tl-authors">Vaswani et al. (2017), Jacob Devlin et al. (Google AI 2018)</span>
+                        </div>
+                        <div class="tl-title">Transformers & BERT: Contextual Neural Encoders</div>
+                        <div class="tl-body">
+                            <p>The <strong>Transformer architecture</strong> ("Attention Is All You Need") introduced multi-head self-attention. In 2018, Google introduced <strong>BERT (Bidirectional Encoder Representations from Transformers)</strong>.</p>
+                            <p>Unlike static Word2Vec vectors, BERT computes <em>context-dependent embeddings</em> for every word in a sequence. The word "bank" receives distinct vector representations based on surrounding context ("river bank" vs. "bank account").</p>
+                            <div class="tl-math">
+                                $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+                            </div>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>Breakthrough:</strong> Completely solved polysemy and complex sentence semantics, elevating search relevance across Google Search (2019 rollout).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 4 — DPR & ColBERT -->
+                <div class="tl-entry" data-era="4">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2019 – 2020</span>
+                            <span class="tl-era-tag era-tag-4">Era IV · Transformers</span>
+                            <span class="tl-authors">Reimers & Gurevych (SBERT, 2019), Karpukhin et al. (Meta DPR, 2020), Khattab & Zaharia (ColBERT, Stanford 2020)</span>
+                        </div>
+                        <div class="tl-title">Dense Passage Retrieval (DPR) & Late Interaction (ColBERT)</div>
+                        <div class="tl-body">
+                            <p>Standard BERT requires feeding every (query, passage) pair together through all transformer layers, which was far too slow for full-corpus search. <strong>Sentence-BERT (SBERT)</strong> and <strong>Dense Passage Retriever (DPR)</strong> introduced <em>Bi-Encoder architectures</em>, independently embedding queries and passages into single dense vectors for instant MIPS (Maximum Inner Product Search).</p>
+                            <p>In 2020, <strong>Omar Khattab & Matei Zaharia</strong> created <strong>ColBERT (Contextualized Late Interaction over BERT)</strong>, preserving token-level contextual interactions via a fast \(\text{MaxSim}\) operator while allowing offline document index pre-computation.</p>
+                            <div class="tl-math">
+                                $$\text{Score}_{\text{ColBERT}}(q, d) = \sum_{i \in |E_q|} \max_{j \in |E_d|} \left( E_{q_i} \cdot E_{d_j}^T \right)$$
+                            </div>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>Architecture Evolution:</strong> Bi-Encoders enabled end-to-end vector search, while ColBERT's Late Interaction bridged the gap between bi-encoder speed and cross-encoder precision.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 5 — RAG -->
+                <div class="tl-entry" data-era="5">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2020 – 2023</span>
+                            <span class="tl-era-tag era-tag-5">Era V · RAG & Vector DBs</span>
+                            <span class="tl-authors">Patrick Lewis et al. (Meta AI / UCL, 2020)</span>
+                        </div>
+                        <div class="tl-title">Retrieval-Augmented Generation (RAG) & Vector Databases</div>
+                        <div class="tl-body">
+                            <p>In 2020, <strong>Patrick Lewis et al.</strong> introduced <strong>RAG (Retrieval-Augmented Generation)</strong>, uniting dense retriever non-parametric memory (DPR index) with a generative seq2seq transformer (BART / LLM parametric memory).</p>
+                            <p>This triggered the explosion of dedicated <strong>Vector Databases</strong> (Pinecone, Qdrant, Milvus, Weaviate, Chroma, pgvector), designed to store, index, filter, and retrieve high-dimensional embedding vectors at production scale.</p>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>Modern Standard:</strong> Grounding Large Language Models in external enterprise data, dramatically reducing hallucinations and providing real-time knowledge updates.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERA 5 — Hybrid -->
+                <div class="tl-entry" data-era="5">
+                    <div class="tl-dot"></div>
+                    <div class="tl-card">
+                        <div class="tl-meta">
+                            <span class="tl-year">2023 – Present</span>
+                            <span class="tl-era-tag era-tag-5">Era V · Modern Production</span>
+                            <span class="tl-authors">Modern Search Engineering Standards</span>
+                        </div>
+                        <div class="tl-title">Hybrid Search (BM25 + Dense Vectors) & Two-Stage Re-Ranking</div>
+                        <div class="tl-body">
+                            <p>Pure vector search has weaknesses: exact keyword matching for serial numbers, part IDs, rare technical acronyms, or specific proper nouns can fail. Modern production search architectures employ <strong>Hybrid Search</strong>, merging BM25 sparse lexical scores with Dense Vector semantic embeddings using <em>Reciprocal Rank Fusion (RRF)</em>.</p>
+                            <p>They follow a <strong>Two-Stage Architecture</strong>: Stage 1 retrieves top ~100-1000 candidate documents via fast Hybrid Search; Stage 2 applies a heavy <strong>Cross-Encoder Re-Ranker</strong> (Cohere Rerank, BGE-Reranker) to output hyper-accurate top-5 rankings.</p>
+                            <div class="tl-math">
+                                $$\text{RRF Score}(d \in D) = \sum_{m \in M} \frac{1}{k + r_m(d)}$$
+                            </div>
+                        </div>
+                        <div class="tl-insight">
+                            <span class="tl-insight-icon">◆</span>
+                            <div><strong>State of the Art:</strong> Combines the precision of 1970s lexical indexing with the semantic depth of 2020s Transformer contextual embeddings.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /.tl -->
+        </div><!-- /.wrap -->
+    </section>
+
+    <!-- ──────────────────── TABLE ──────────────────── -->
+    <section class="table-section wrap">
+        <h2>Architecture Comparison Matrix</h2>
+        <p>A technical side-by-side evaluation of search paradigm generations.</p>
+        <div class="tbl-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Paradigm</th>
+                        <th>Representation</th>
+                        <th>Matching</th>
+                        <th>Strengths</th>
+                        <th>Weaknesses</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sparse Lexical</strong><br><span class="tt">BM25 / TF-IDF</span></td>
+                        <td>High-dim sparse bag-of-words</td>
+                        <td>Exact token match & frequency</td>
+                        <td>Fast, cheap, exact for IDs & names</td>
+                        <td>Fails on synonyms & intent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Latent Space</strong><br><span class="tt">LSA / LDA</span></td>
+                        <td>SVD-reduced k-dim topic vectors</td>
+                        <td>Matrix decomposition & cosine</td>
+                        <td>Discovers latent topics</td>
+                        <td>Heavy SVD updates, weak context</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dense Embeddings</strong><br><span class="tt">Word2Vec / GloVe</span></td>
+                        <td>300d static continuous vectors</td>
+                        <td>Inner product & cosine</td>
+                        <td>Vector arithmetic, clustering</td>
+                        <td>Static — cannot handle polysemy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bi-Encoder Dense</strong><br><span class="tt">SBERT / DPR</span></td>
+                        <td>768d contextual sentence vectors</td>
+                        <td>MIPS via HNSW / FAISS</td>
+                        <td>Sub-ms semantic search at scale</td>
+                        <td>Loses fine-grained token detail</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Late Interaction</strong><br><span class="tt">ColBERT</span></td>
+                        <td>Multi-vector token-level matrix</td>
+                        <td>MaxSim token summation</td>
+                        <td>Cross-encoder precision, offline index</td>
+                        <td>Larger index footprint</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hybrid + Rerank</strong><br><span class="tt">BM25 + Dense + XEncoder</span></td>
+                        <td>Sparse + Dense + Cross-Attention</td>
+                        <td>RRF fusion + reranker</td>
+                        <td>Gold standard across all query types</td>
+                        <td>Pipeline complexity & latency</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <div class="wrap">
+            <p>Deep Research Synthesis · Semantic Search Evolution 1950s – 2026+</p>
+        </div>
+    </footer>
+
+    <script>
+    /* ──────────────────── ERA FILTER & SEARCH ──────────────────── */
+    const tabs = document.querySelectorAll('.era-tab');
+    const entries = document.querySelectorAll('.tl-entry');
+    const searchInput = document.getElementById('timelineSearch');
+    let activeEra = 'all', searchTerm = '';
+
+    tabs.forEach(t => t.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        t.classList.add('active');
+        activeEra = t.dataset.era;
+        applyFilters();
+    }));
+
+    searchInput.addEventListener('input', e => {
+        searchTerm = e.target.value.toLowerCase().trim();
+        applyFilters();
+    });
+
+    function applyFilters() {
+        entries.forEach(el => {
+            const era = el.dataset.era;
+            const text = el.textContent.toLowerCase();
+            const show = (activeEra === 'all' || era === activeEra) && (!searchTerm || text.includes(searchTerm));
+            el.style.display = show ? 'block' : 'none';
+            if (show && !el.classList.contains('visible')) el.classList.add('visible');
+        });
+    }
+
+    /* ──────────────────── SCROLL REVEAL ──────────────────── */
+    const observer = new IntersectionObserver((items) => {
+        items.forEach(i => { if (i.isIntersecting) i.target.classList.add('visible'); });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    entries.forEach(e => observer.observe(e));
+
+    /* ──────────────────── HERO PARTICLES ──────────────────── */
+    const hCanvas = document.getElementById('heroParticles');
+    const hCtx = hCanvas.getContext('2d');
+    let particles = [];
+    const PARTICLE_COUNT = 90;
+
+    function initHero() {
+        hCanvas.width = window.innerWidth;
+        hCanvas.height = window.innerHeight;
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            particles.push({
+                x: Math.random() * hCanvas.width,
+                y: Math.random() * hCanvas.height,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                r: Math.random() * 2 + 1
+            });
+        }
+    }
+
+    function drawHero() {
+        hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+
+        // Connections
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 140) {
+                    hCtx.beginPath();
+                    hCtx.moveTo(particles[i].x, particles[i].y);
+                    hCtx.lineTo(particles[j].x, particles[j].y);
+                    hCtx.strokeStyle = `rgba(194, 65, 12, ${0.12 * (1 - dist / 140)})`;
+                    hCtx.lineWidth = 0.6;
+                    hCtx.stroke();
+                }
+            }
+        }
+
+        // Dots
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > hCanvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > hCanvas.height) p.vy *= -1;
+
+            hCtx.beginPath();
+            hCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            hCtx.fillStyle = 'rgba(194, 65, 12, 0.2)';
+            hCtx.fill();
+        });
+
+        requestAnimationFrame(drawHero);
+    }
+
+    window.addEventListener('resize', initHero);
+    initHero();
+    drawHero();
+
+    /* ──────────────────── VECTOR CANVAS ──────────────────── */
+    const vCanvas = document.getElementById('vectorCanvas');
+    const vCtx = vCanvas.getContext('2d');
+
+    let points = [
+        { label: 'King',          x: 0.25, y: 0.25, color: '#1e3a5f', tX: 0.25, tY: 0.25 },
+        { label: 'Man',           x: 0.22, y: 0.62, color: '#a16207', tX: 0.22, tY: 0.62 },
+        { label: 'Woman',         x: 0.72, y: 0.62, color: '#be123c', tX: 0.72, tY: 0.62 },
+        { label: 'Queen',         x: 0.75, y: 0.25, color: '#0d9488', tX: 0.75, tY: 0.25 },
+        { label: 'Car',           x: 0.42, y: 0.82, color: '#7e22ce', tX: 0.42, tY: 0.82 },
+        { label: 'Automobile',    x: 0.47, y: 0.86, color: '#7e22ce', tX: 0.47, tY: 0.86 },
+        { label: 'Bank (Money)',  x: 0.12, y: 0.12, color: '#c2410c', tX: 0.12, tY: 0.12 },
+        { label: 'Bank (River)',  x: 0.88, y: 0.88, color: '#3b82f6', tX: 0.88, tY: 0.88 }
+    ];
+
+    let connections = [];
+
+    function resizeVC() {
+        vCanvas.width = vCanvas.parentElement.clientWidth;
+        vCanvas.height = vCanvas.parentElement.clientHeight;
+    }
+
+    function drawVC() {
+        vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
+        const W = vCanvas.width, H = vCanvas.height;
+
+        // Grid
+        vCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+        vCtx.lineWidth = 0.5;
+        for (let i = 0; i < W; i += 36) { vCtx.beginPath(); vCtx.moveTo(i, 0); vCtx.lineTo(i, H); vCtx.stroke(); }
+        for (let i = 0; i < H; i += 36) { vCtx.beginPath(); vCtx.moveTo(0, i); vCtx.lineTo(W, i); vCtx.stroke(); }
+
+        // Axes
+        vCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+        vCtx.lineWidth = 1;
+        vCtx.beginPath(); vCtx.moveTo(0, H / 2); vCtx.lineTo(W, H / 2); vCtx.stroke();
+        vCtx.beginPath(); vCtx.moveTo(W / 2, 0); vCtx.lineTo(W / 2, H); vCtx.stroke();
+
+        // Connections
+        connections.forEach(c => {
+            const a = points.find(p => p.label === c.from);
+            const b = points.find(p => p.label === c.to);
+            if (a && b) {
+                vCtx.beginPath();
+                vCtx.moveTo(a.x * W, a.y * H);
+                vCtx.lineTo(b.x * W, b.y * H);
+                vCtx.strokeStyle = c.color;
+                vCtx.setLineDash(c.dash || []);
+                vCtx.lineWidth = 1.5;
+                vCtx.stroke();
+                vCtx.setLineDash([]);
+
+                // Arrow
+                const angle = Math.atan2(b.y * H - a.y * H, b.x * W - a.x * W);
+                const mx = (a.x + b.x) / 2 * W;
+                const my = (a.y + b.y) / 2 * H;
+                vCtx.beginPath();
+                vCtx.moveTo(mx, my);
+                vCtx.lineTo(mx - 6 * Math.cos(angle - 0.4), my - 6 * Math.sin(angle - 0.4));
+                vCtx.moveTo(mx, my);
+                vCtx.lineTo(mx - 6 * Math.cos(angle + 0.4), my - 6 * Math.sin(angle + 0.4));
+                vCtx.strokeStyle = c.color;
+                vCtx.lineWidth = 1.5;
+                vCtx.stroke();
+            }
+        });
+
+        // Points
+        points.forEach(p => {
+            p.x += (p.tX - p.x) * 0.08;
+            p.y += (p.tY - p.y) * 0.08;
+            const cx = p.x * W, cy = p.y * H;
+
+            // Outer glow
+            const g = vCtx.createRadialGradient(cx, cy, 0, cx, cy, 14);
+            g.addColorStop(0, p.color + '44');
+            g.addColorStop(1, p.color + '00');
+            vCtx.beginPath(); vCtx.arc(cx, cy, 14, 0, Math.PI * 2);
+            vCtx.fillStyle = g; vCtx.fill();
+
+            // Dot
+            vCtx.beginPath(); vCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+            vCtx.fillStyle = p.color; vCtx.fill();
+
+            // Ring
+            vCtx.beginPath(); vCtx.arc(cx, cy, 6, 0, Math.PI * 2);
+            vCtx.strokeStyle = p.color + '88'; vCtx.lineWidth = 1;
+            vCtx.stroke();
+
+            // Label
+            vCtx.font = '600 11px JetBrains Mono';
+            vCtx.fillStyle = '#f5ede3';
+            vCtx.fillText(p.label, cx + 12, cy + 4);
+        });
+
+        requestAnimationFrame(drawVC);
+    }
+
+    function triggerVectorMath(type) {
+        connections = [];
+        if (type === 'king-man+woman') {
+            connections = [
+                { from: 'King', to: 'Man', color: 'rgba(161, 98, 7, 0.7)', dash: [5, 4] },
+                { from: 'Man', to: 'Woman', color: 'rgba(190, 18, 60, 0.7)' },
+                { from: 'Woman', to: 'Queen', color: 'rgba(13, 148, 136, 0.7)', dash: [5, 4] },
+                { from: 'King', to: 'Queen', color: 'rgba(59, 130, 246, 0.9)' }
+            ];
+        } else if (type === 'synonyms') {
+            connections = [{ from: 'Car', to: 'Automobile', color: 'rgba(126, 34, 206, 0.9)' }];
+        } else if (type === 'polysemy') {
+            connections = [{ from: 'Bank (Money)', to: 'Bank (River)', color: 'rgba(239, 68, 68, 0.7)', dash: [6, 4] }];
+        }
+    }
+
+    function resetCanvas() { connections = []; }
+
+    window.addEventListener('resize', resizeVC);
+    setTimeout(() => { resizeVC(); drawVC(); }, 80);
+
+    /* ──────────────────── SEARCH SIMULATOR ──────────────────── */
+    const corpus = [
+        "How to fix a punctured automobile tire easily",
+        "Steps for changing a flat tire on your vehicle",
+        "Opening a high-yield savings account at a financial bank",
+        "Walking along the scenic river bank in the afternoon",
+        "Automotive repair guide and routine car maintenance tips"
+    ];
+
+    function runSimulatedSearch() {
+        const query = document.getElementById('demoQueryInput').value.toLowerCase().trim();
+        const lexBox = document.getElementById('lexicalResults');
+        const semBox = document.getElementById('semanticResults');
+        lexBox.innerHTML = ''; semBox.innerHTML = '';
+
+        const qTokens = query.split(/\s+/).filter(t => t.length > 2);
+
+        corpus.forEach(doc => {
+            const dl = doc.toLowerCase();
+
+            // Lexical
+            const hits = qTokens.filter(t => dl.includes(t));
+            const lEl = document.createElement('div');
+            lEl.className = hits.length > 0 ? 'r-item hit-lex' : 'r-item miss';
+            lEl.innerHTML = `<strong>${hits.length} hit${hits.length !== 1 ? 's' : ''}</strong> — ${doc}`;
+            lexBox.appendChild(lEl);
+
+            // Semantic
+            let score = 0;
+            if (query.includes('tire') || query.includes('fix') || query.includes('car') || query.includes('automobile') || query.includes('vehicle')) {
+                if (dl.includes('tire') || dl.includes('vehicle') || dl.includes('automobile') || dl.includes('car maintenance')) score = 0.88;
+            } else if (query.includes('bank') || query.includes('money') || query.includes('account')) {
+                if (dl.includes('financial bank') || dl.includes('savings account')) score = 0.94;
+            } else {
+                score = 0.5 + Math.random() * 0.4;
+            }
+            const sEl = document.createElement('div');
+            sEl.className = score > 0.7 ? 'r-item hit-sem' : 'r-item miss';
+            sEl.innerHTML = `<strong>${score.toFixed(2)}</strong> — ${doc}`;
+            semBox.appendChild(sEl);
+        });
+    }
+
+    runSimulatedSearch();
+    </script>
+</body>
+</html>
