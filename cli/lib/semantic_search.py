@@ -58,3 +58,4 @@ if __name__ == "__main__":
         add_vectors([1.0, 2.0], [1.0])
     except ValueError as e:
         print(f"Caught expected error: {e}")
+c

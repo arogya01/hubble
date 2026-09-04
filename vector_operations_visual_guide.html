@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Operations in Search: An Interactive First-Principles Guide</title>
+    <meta name="description" content="An intuitive, interactive visual guide explaining vector embeddings, dot products, vector magnitudes, cosine similarity, and matrix search from first principles.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering LaTeX formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --ink: #0c0a09;
+            --paper: #faf6f1;
+            --paper-warm: #f5ede3;
+            --card-bg: #ffffff;
+            --text-body: #292524;
+            --text-secondary: #78716c;
+            --text-faint: #a8a29e;
+            --rust: #c2410c;
+            --rust-light: #fb923c;
+            --teal: #0d9488;
+            --teal-deep: #115e59;
+            --blue: #2563eb;
+            --purple: #7e22ce;
+            --gold: #d97706;
+            --border: rgba(12, 10, 9, 0.1);
+            --border-strong: rgba(12, 10, 9, 0.2);
+            --shadow-sm: 0 4px 20px rgba(12, 10, 9, 0.05);
+            --shadow-md: 0 12px 36px rgba(12, 10, 9, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--paper);
+            color: var(--text-body);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* Grain overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .wrap {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 clamp(20px, 4vw, 40px);
+        }
+
+        /* Header */
+        header {
+            padding: 70px 0 40px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 50px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--rust);
+            margin-bottom: 20px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 32px;
+            height: 2px;
+            background: var(--rust);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            color: var(--ink);
+            max-width: 900px;
+            margin-bottom: 24px;
+        }
+
+        h1 em {
+            font-style: italic;
+            color: var(--rust);
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 720px;
+            line-height: 1.8;
+            font-weight: 400;
+        }
+
+        /* Interactive Simulator Section */
+        .interactive-hero {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 32px;
+            margin-bottom: 60px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sim-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        .sim-title h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .sim-title span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .sim-grid { grid-template-columns: 1fr; }
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 380px;
+            background: #0f172a;
+            border-radius: 4px;
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .sim-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: var(--paper-warm);
+            padding: 14px 18px;
+            border-radius: 2px;
+            border-left: 3px solid var(--border-strong);
+        }
+
+        .metric-card.highlight {
+            border-left-color: var(--teal);
+            background: rgba(13, 148, 136, 0.08);
+        }
+
+        .metric-card.highlight-rust {
+            border-left-color: var(--rust);
+            background: rgba(194, 65, 12, 0.08);
+        }
+
+        .metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .metric-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .sim-interpretation {
+            font-size: 0.92rem;
+            background: var(--paper);
+            padding: 14px 16px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            color: var(--text-body);
+            line-height: 1.6;
+        }
+
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pbtn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 8px 14px;
+            border: 1px solid var(--border-strong);
+            background: white;
+            color: var(--text-body);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pbtn:hover {
+            background: var(--ink);
+            color: white;
+            border-color: var(--ink);
+        }
+
+        /* 3 Core Pillars */
+        .section-header {
+            margin-bottom: 36px;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--rust);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            font-size: 0.92rem;
+            color: var(--text-body);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .math-block {
+            background: var(--ink);
+            color: #e2e8f0;
+            padding: 14px 16px;
+            border-radius: 2px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            border-left: 3px solid var(--rust);
+            margin-bottom: 16px;
+        }
+
+        .card-footer {
+            font-size: 0.82rem;
+            color: var(--teal-deep);
+            background: rgba(13, 148, 136, 0.08);
+            padding: 10px 14px;
+            border-radius: 2px;
+            border-left: 2px solid var(--teal);
+        }
+
+        /* Matrix Search Visualizer */
+        .matrix-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 36px;
+            margin-bottom: 60px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .matrix-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 32px 0;
+            padding: 24px;
+            background: var(--paper-warm);
+            border-radius: 2px;
+        }
+
+        .matrix-box {
+            background: white;
+            border: 1px solid var(--border-strong);
+            padding: 18px 22px;
+            border-radius: 2px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .matrix-box .m-title {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .matrix-box .m-dim {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--rust);
+        }
+
+        .op-sign {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-faint);
+        }
+
+        .code-preview {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px 24px;
+            border-radius: 2px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .code-preview .comment { color: #64748b; }
+        .code-preview .keyword { color: #f43f5e; }
+        .code-preview .func { color: #38bdf8; }
+        .code-preview .num { color: #facc15; }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrap">
+        <!-- Header -->
+        <header>
+            <div class="badge">First Principles Guide</div>
+            <h1>Why <em>Vector Operations</em> Power Semantic Search</h1>
+            <p class="subtitle">Turning text into numbers is only half the story. Once sentences become multi-dimensional arrows, search transforms from keyword string matching into fast, elegant geometry.</p>
+        </header>
+
+        <!-- Interactive Canvas Simulator -->
+        <section class="interactive-hero">
+            <div class="sim-title">
+                <h2>Interactive Vector & Angle Simulator</h2>
+                <span>Drag the arrow tips or pick a preset below</span>
+            </div>
+
+            <div class="sim-grid">
+                <!-- Canvas -->
+                <div class="canvas-container" id="canvasWrap">
+                    <canvas id="simCanvas"></canvas>
+                </div>
+
+                <!-- Controls & Live Readouts -->
+                <div class="sim-controls">
+                    <div class="metrics-grid">
+                        <div class="metric-card highlight-rust">
+                            <div class="metric-label">Query Vector \(\vec{q}\)</div>
+                            <div class="metric-val" id="valQ">[0.80, 0.60]</div>
+                        </div>
+                        <div class="metric-card highlight">
+                            <div class="metric-label">Doc Vector \(\vec{d}\)</div>
+                            <div class="metric-val" id="valD">[0.60, 0.80]</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Angle \(\theta\) (Degrees)</div>
+                            <div class="metric-val" id="valAngle">16.3°</div>
+                        </div>
+                        <div class="metric-card highlight">
+                            <div class="metric-label">Cosine Similarity \(\cos\theta\)</div>
+                            <div class="metric-val" id="valCos">0.960</div>
+                        </div>
+                    </div>
+
+                    <div class="sim-interpretation" id="simText">
+                        <strong>Semantic Match:</strong> The vectors point in almost the identical direction (\(\theta \approx 16^\circ\)). The similarity score is close to <strong>1.0</strong>, signaling a strong topical match.
+                    </div>
+
+                    <div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Presets:</div>
+                        <div class="presets">
+                            <button class="pbtn" onclick="setPreset('match')">★ Exact Match (\(\theta=0^\circ\))</button>
+                            <button class="pbtn" onclick="setPreset('close')">⚡ Close Match ("Iron Man" vs "Armor")</button>
+                            <button class="pbtn" onclick="setPreset('orthogonal')">⊥ Unrelated / Perpendicular (\(\theta=90^\circ\))</button>
+                            <button class="pbtn" onclick="setPreset('opposite')">↔ Opposite Direction (\(\theta=180^\circ\))</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3 Core Vector Operations -->
+        <div class="section-header">
+            <h2>The 3 Operations You Need</h2>
+            <p>You don't need a degree in pure mathematics—search relies on three intuitive building blocks.</p>
+        </div>
+
+        <div class="cards-grid">
+            <!-- 1. Dot Product -->
+            <div class="card">
+                <div>
+                    <div class="card-num">Operation 01</div>
+                    <h3>The Dot Product</h3>
+                    <p>Multiplies corresponding coordinates along every dimension and sums them up. Measures coordinate-level agreement.</p>
+                    <div class="math-block">
+                        $$\vec{u} \cdot \vec{v} = \sum_{i=1}^{d} u_i v_i = u_1 v_1 + u_2 v_2 + \dots + u_d v_d$$
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <strong>Intuition:</strong> If both vectors have large numbers in the "superhero" dimensions, the sum grows large and positive.
+                </div>
+            </div>
+
+            <!-- 2. Magnitude / Norm -->
+            <div class="card">
+                <div>
+                    <div class="card-num">Operation 02</div>
+                    <h3>Vector Magnitude (\(L_2\) Norm)</h3>
+                    <p>The straight-line Euclidean distance from the origin \((0,0)\) to the vector tip. Quantifies vector length.</p>
+                    <div class="math-block">
+                        $$\|\vec{v}\| = \sqrt{v_1^2 + v_2^2 + \dots + v_d^2}$$
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <strong>Why it matters:</strong> Longer text shouldn't get higher scores just because it has more words. We normalize length to 1.
+                </div>
+            </div>
+
+            <!-- 3. Cosine Similarity -->
+            <div class="card">
+                <div>
+                    <div class="card-num">Operation 03</div>
+                    <h3>Cosine Similarity</h3>
+                    <p>Divides the dot product by both vector lengths to compute <em>strictly the angle</em> \(\theta\), eliminating document length bias.</p>
+                    <div class="math-block">
+                        $$\cos(\theta) = \frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}$$
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <strong>The Pro Trick:</strong> When vectors are pre-normalized to length 1, \(\|\vec{u}\|\|\vec{v}\| = 1\), so Cosine Similarity is simply the Dot Product!
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrix Search Section -->
+        <section class="matrix-section">
+            <div class="section-header">
+                <h2>Why Vector Search is Blazing Fast</h2>
+                <p>How matrix multiplication searches 5,000 movies in 1 millisecond without a single Python <code>for</code> loop.</p>
+            </div>
+
+            <div class="matrix-flow">
+                <div class="matrix-box">
+                    <div class="m-title">Corpus Embeddings Matrix (\(M\))</div>
+                    <div class="m-dim">5,000 × 384</div>
+                </div>
+                <div class="op-sign">×</div>
+                <div class="matrix-box">
+                    <div class="m-title">Query Vector (\(\vec{q}\))</div>
+                    <div class="m-dim">384 × 1</div>
+                </div>
+                <div class="op-sign">=</div>
+                <div class="matrix-box" style="border-color:var(--teal); background:rgba(13,148,136,0.05);">
+                    <div class="m-title">Similarity Scores</div>
+                    <div class="m-dim" style="color:var(--teal);">5,000 × 1</div>
+                </div>
+            </div>
+
+            <div class="code-preview">
+<span class="comment"># In Python with NumPy, this is a single vectorized instruction:</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># query_vec: shape (384,)</span>
+<span class="comment"># doc_matrix: shape (5000, 384)</span>
+scores = np.<span class="func">dot</span>(doc_matrix, query_vec)  <span class="comment"># Returns all 5,000 similarity scores instantly!</span>
+
+<span class="comment"># Sort in descending order to get Top 5 most relevant movie indices:</span>
+top_indices = np.<span class="func">argsort</span>(scores)[::-<span class="num">1</span>][:<span class="num">5</span>]
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Vector Operations &bull; Semantic Search Visual Guide</p>
+        </footer>
+    </div>
+
+    <!-- Interactive Canvas Script -->
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, centerX, centerY, radius;
+
+        // Vectors in normalized polar/cartesian coordinates (-1 to 1)
+        let qVec = { x: 0.85, y: 0.52, color: '#fb923c', label: 'Query (q)' };
+        let dVec = { x: 0.62, y: 0.78, color: '#2dd4bf', label: 'Doc (d)' };
+
+        let dragging = null;
+
+        function resize() {
+            width = canvas.parentElement.clientWidth;
+            height = canvas.parentElement.clientHeight;
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            centerX = width / 2;
+            centerY = height / 2;
+            radius = Math.min(width, height) * 0.38;
+            draw();
+        }
+
+        window.addEventListener('resize', resize);
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw Background Axes
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, height);
+            ctx.stroke();
+
+            // Unit Circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Calculate Angle & Math
+            const magQ = Math.sqrt(qVec.x * qVec.x + qVec.y * qVec.y);
+            const magD = Math.sqrt(dVec.x * dVec.x + dVec.y * dVec.y);
+            const dot = qVec.x * dVec.x + qVec.y * dVec.y;
+            const cosSim = magQ > 0 && magD > 0 ? (dot / (magQ * magD)) : 0;
+            const clampedCos = Math.max(-1, Math.min(1, cosSim));
+            const angleRad = Math.acos(clampedCos);
+            const angleDeg = (angleRad * 180 / Math.PI).toFixed(1);
+
+            // Draw Arc between vectors
+            const angleQ = Math.atan2(-qVec.y, qVec.x);
+            const angleD = Math.atan2(-dVec.y, dVec.x);
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.35, Math.min(angleQ, angleD), Math.max(angleQ, angleD));
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw Vector Q (Query)
+            drawArrow(centerX, centerY, centerX + qVec.x * radius, centerY - qVec.y * radius, qVec.color, qVec.label);
+
+            // Draw Vector D (Document)
+            drawArrow(centerX, centerY, centerX + dVec.x * radius, centerY - dVec.y * radius, dVec.color, dVec.label);
+
+            // Update UI metrics
+            document.getElementById('valQ').innerText = `[${qVec.x.toFixed(2)}, ${qVec.y.toFixed(2)}]`;
+            document.getElementById('valD').innerText = `[${dVec.x.toFixed(2)}, ${dVec.y.toFixed(2)}]`;
+            document.getElementById('valAngle').innerText = `${angleDeg}°`;
+            document.getElementById('valCos').innerText = cosSim.toFixed(3);
+
+            // Update text explanation
+            const simEl = document.getElementById('simText');
+            if (cosSim > 0.85) {
+                simEl.innerHTML = `<strong>★ Strong Semantic Match:</strong> The query and document point almost identically in vector space (angle \(\\theta = ${angleDeg}^\\circ\\), \(\\cos\\theta = ${cosSim.toFixed(3)}\)). The retrieval engine will rank this at the very top!`;
+            } else if (cosSim > 0.3) {
+                simEl.innerHTML = `<strong>⚡ Moderate Semantic Relation:</strong> Some contextual overlap exists (angle \(\\theta = ${angleDeg}^\\circ\\), \(\\cos\\theta = ${cosSim.toFixed(3)}\)). Moderate ranking.`;
+            } else if (cosSim > -0.2) {
+                simEl.innerHTML = `<strong>⊥ Orthogonal / Unrelated:</strong> The vectors are nearly perpendicular (angle \(\\theta = ${angleDeg}^\\circ\\), \(\\cos\\theta = ${cosSim.toFixed(3)}\)). The topics have no mutual semantic connection.`;
+            } else {
+                simEl.innerHTML = `<strong>↔ Opposing / Negative Similarity:</strong> Pointing in opposite directions (angle \(\\theta = ${angleDeg}^\\circ\\), \(\\cos\\theta = ${cosSim.toFixed(3)}\)).`;
+            }
+        }
+
+        function drawArrow(fromX, fromY, toX, toY, color, label) {
+            const headlen = 10;
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const angle = Math.atan2(dy, dx);
+
+            // Line
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // Handle circle
+            ctx.beginPath();
+            ctx.arc(toX, toY, 7, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Label
+            ctx.font = '600 12px JetBrains Mono';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(label, toX + 10, toY - 8);
+        }
+
+        // Mouse Drag Handlers
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            const x = (clientX - rect.left - centerX) / radius;
+            const y = -(clientY - rect.top - centerY) / radius;
+            return { x, y };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getCanvasCoords(e);
+            const distQ = Math.hypot(pos.x - qVec.x, pos.y - qVec.y);
+            const distD = Math.hypot(pos.x - dVec.x, pos.y - dVec.y);
+            if (distQ < 0.25) dragging = 'q';
+            else if (distD < 0.25) dragging = 'd';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const pos = getCanvasCoords(e);
+            const mag = Math.hypot(pos.x, pos.y);
+            const normX = mag > 0 ? pos.x / Math.max(1, mag) : 0;
+            const normY = mag > 0 ? pos.y / Math.max(1, mag) : 0;
+
+            if (dragging === 'q') { qVec.x = normX; qVec.y = normY; }
+            if (dragging === 'd') { dVec.x = normX; dVec.y = normY; }
+            draw();
+        });
+
+        window.addEventListener('mouseup', () => { dragging = null; });
+
+        function setPreset(type) {
+            if (type === 'match') {
+                qVec.x = 0.707; qVec.y = 0.707;
+                dVec.x = 0.707; dVec.y = 0.707;
+            } else if (type === 'close') {
+                qVec.x = 0.85; qVec.y = 0.52;
+                dVec.x = 0.75; dVec.y = 0.66;
+            } else if (type === 'orthogonal') {
+                qVec.x = 1.0; qVec.y = 0.0;
+                dVec.x = 0.0; dVec.y = 1.0;
+            } else if (type === 'opposite') {
+                qVec.x = 0.8; qVec.y = 0.6;
+                dVec.x = -0.8; dVec.y = -0.6;
+            }
+            draw();
+        }
+
+        setTimeout(resize, 60);
+    </script>
+</body>
+</html>
