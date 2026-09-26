@@ -32,10 +32,18 @@ def subtract_vectors(vec1 : list[float], vec2: list[float]) -> list[float]:
 
     for i in range(len(vec1)): 
         result.append(vec1[i] - vec2[i])
-
+    
     return result
 
+def dot_product(vec1: list[float], vec:list[float])-> list[float]: 
+    if len(vec1) != len(vec2): 
+        raise ValueError("Vectors must be the same length")
 
+    result = []
+
+    for i in range(len(vec1)): 
+        result+=(vec1[i] * vec2[i]) 
+        
 
 if __name__ == "__main__":
     # Test movie vectors
@@ -58,4 +66,5 @@ if __name__ == "__main__":
         add_vectors([1.0, 2.0], [1.0])
     except ValueError as e:
         print(f"Caught expected error: {e}")
-c
+
+
