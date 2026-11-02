@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosine Similarity: Direction Over Magnitude</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#faf6f1; color:#292524; max-width:760px; margin:2rem auto; padding:0 1rem; line-height:1.6; }
+  h1 { font-size:1.8rem; } h2 { margin-top:2rem; }
+  .card { background:#fff; border:1px solid #ece4d8; border-radius:12px; padding:1rem 1.25rem; margin:1rem 0; }
+  code { background:#f5ede3; padding:.1rem .35rem; border-radius:4px; }
+  svg { background:#fff; border:1px solid #ece4d8; border-radius:12px; width:100%; max-width:420px; display:block; }
+  label { display:block; margin:.5rem 0 .2rem; font-weight:600; }
+  input[type=range] { width:100%; }
+  .out { font-family: ui-monospace, monospace; font-size:1.05rem; }
+  .try li { margin:.3rem 0; }
+</style>
+</head>
+<body>
+<h1>Cosine Similarity: Direction Over Magnitude</h1>
+<p>The dot product mixes two things: how <em>aligned</em> two vectors are, and how <em>long</em> they are. For search we only care about the first one.</p>
+
+<h2>1. The problem with the raw dot product</h2>
+<div class="card">
+  <p>Two documents can mean the same thing, but if one embedding is simply longer, the dot product scores it higher. Length is noise here. Cosine similarity divides the length out:</p>
+  <p class="out">cos(A, B) = (A · B) / (‖A‖ × ‖B‖)</p>
+  <p>The result is always between −1 and 1: <strong>1</strong> = same direction, <strong>0</strong> = unrelated (perpendicular), <strong>−1</strong> = opposite.</p>
+</div>
+
+<h2>2. Play with it</h2>
+<div class="card">
+  <svg id="plot" viewBox="-110 -110 220 220" aria-label="Two vectors in 2D"></svg>
+  <label>Angle of B: <span id="angLabel">45</span>°</label>
+  <input id="ang" type="range" min="0" max="180" value="45">
+  <label>Length of B: <span id="lenLabel">80</span></label>
+  <input id="len" type="range" min="10" max="100" value="80">
+  <p class="out">dot product = <span id="dot"></span><br>cosine similarity = <span id="cos"></span></p>
+  <ul class="try">
+    <li>Drag <strong>length</strong>: the dot product changes, the cosine does not.</li>
+    <li>Drag <strong>angle</strong>: the cosine follows the angle (0° → 1, 90° → 0, 180° → −1).</li>
+  </ul>
+</div>
+
+<h2>3. Why this matters for your search engine</h2>
+<div class="card">
+  <ul>
+    <li>Your query embedding and each movie embedding are compared pairwise, then ranked by score.</li>
+    <li>Ranking by cosine means a long, wordy description is not favoured just for being long.</li>
+    <li>Things to think about: what happens if a vector has length 0? How could you score all documents at once with NumPy instead of a Python loop?</li>
+  </ul>
+</div>
+
+<script>
+const svg = document.getElementById('plot');
+const A = [90, 0];
+function draw() {
+  const deg = +document.getElementById('ang').value;
+  const len = +document.getElementById('len').value;
+  const rad = deg * Math.PI / 180;
+  const B = [len * Math.cos(rad), -len * Math.sin(rad)];
+  const dot = A[0]*B[0] + A[1]*B[1]*-1;
+  const cos = Math.cos(rad);
+  const arrow = (v, c) => `<line x1="0" y1="0" x2="${v[0]}" y2="${v[1]}" stroke="${c}" stroke-width="3"/><circle cx="${v[0]}" cy="${v[1]}" r="4" fill="${c}"/>`;
+  svg.innerHTML = `<line x1="-100" y1="0" x2="100" y2="0" stroke="#ddd"/><line x1="0" y1="-100" x2="0" y2="100" stroke="#ddd"/>`
+    + arrow(A, '#0d9488') + arrow(B, '#c2410c')
+    + `<text x="${A[0]-14}" y="14" fill="#0d9488" font-size="12">A</text><text x="${B[0]+6}" y="${B[1]-6}" fill="#c2410c" font-size="12">B</text>`;
+  document.getElementById('angLabel').textContent = deg;
+  document.getElementById('lenLabel').textContent = len;
+  document.getElementById('dot').textContent = (90 * len * cos).toFixed(0);
+  document.getElementById('cos').textContent = cos.toFixed(3);
+}
+document.getElementById('ang').addEventListener('input', draw);
+document.getElementById('len').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>
