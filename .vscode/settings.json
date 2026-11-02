@@ -1,9 +1,49 @@
 {
-  "python.languageServer": "None",
+  // Pylance (the real Python language server) - "None" disables all
+  // completions, go-to-definition, hover docs and type checking.
+  "python.languageServer": "Pylance",
+  // Relative path: defaultInterpreterPath does not reliably expand
+  // ${workspaceFolder}, so a literal env-var path shows "could not be resolved".
+  "python.defaultInterpreterPath": ".venv/bin/python",
   "python.terminal.activateEnvironment": true,
+
+  // Treat cli/ as an import root so `from lib.keyword_search import ...` resolves.
+  "python.analysis.extraPaths": ["${workspaceFolder}/cli"],
   "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "workspace",
   "python.analysis.autoImportCompletions": true,
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/cli"
-  ]
+  "python.analysis.autoImportUserSymbols": true,
+  "python.analysis.indexing": true,
+  "python.analysis.importFormat": "absolute",
+
+  // Show inferred types inline - useful while learning the data shapes.
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.callArgumentNames": false,
+
+  // Test explorer (pytest config lives in pyproject.toml).
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["cli/tests"],
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.rulers": [100]
+  },
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    ".ruff_cache": true,
+    ".pytest_cache": true
+  },
+  "search.exclude": {
+    "**/.venv": true,
+    "cache": true,
+    "data": true,
+    "uv.lock": true
+  }
 }

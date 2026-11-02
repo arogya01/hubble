@@ -1,10 +1,41 @@
 [project]
 name = "rag-search-engine"
 version = "0.1.0"
-description = "Add your description here"
+description = "A from-scratch search engine: keyword (TF-IDF/BM25) and semantic (embeddings) search over a movie corpus"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "nltk==3.9.1",
+    "numpy==2.3.3",
     "sentence-transformers>=5.7.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.400",
+    "pytest>=8.4.0",
+    "ruff>=0.13.0",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["cli"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "E501",  # line-too-long: formatter handles it, don't nag while writing
+    "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"cli/tests/*" = ["S101"]  # asserts are the point in tests
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["cli/tests"]
+pythonpath = ["cli"]
+addopts = "-q"

@@ -1,0 +1,18 @@
+{
+  "include": ["cli"],
+  "exclude": ["**/__pycache__", ".venv", "cache", "data"],
+
+  // Tells Pyright/Pylance which interpreter's packages to resolve.
+  "venvPath": ".",
+  "venv": ".venv",
+
+  "extraPaths": ["cli"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+
+  // sentence-transformers / nltk ship loose annotations.
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownArgumentType": false
+}

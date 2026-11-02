@@ -5,7 +5,25 @@ build/
 dist/
 wheels/
 *.egg-info
-data/
+
+# Corpus: the .json/.txt are tracked so a clone can rebuild the index;
+# anything else dropped in data/ stays local.
+data/*
+!data/movies.json
+!data/stopwords.txt
+
+# Generated index - rebuild it with `python cli/keyword_search_cli.py build`
+cache/
 
 # Virtual environments
 .venv
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# OS / editor noise
+.DS_Store
+.playwright-mcp/
+.freebuff/

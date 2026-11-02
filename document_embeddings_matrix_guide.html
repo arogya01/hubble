@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Document Embeddings & Matrix Shapes</title>
+    <meta name="description" content="An interactive visual guide explaining the shape, memory layout, and geometric structure of document embeddings matrices.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0f172a;
+            --paper: #f8fafc;
+            --paper-warm: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-body: #334155;
+            --text-secondary: #64748b;
+            --text-faint: #94a3b8;
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+            --rose: #f43f5e;
+            --purple: #8b5cf6;
+            --border: rgba(15, 23, 42, 0.08);
+            --border-strong: rgba(15, 23, 42, 0.16);
+            --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--paper);
+            color: var(--text-body);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* Subtle background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle at 25px 25px, rgba(15, 23, 42, 0.04) 2px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .wrap {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 64px 24px 120px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #eff6ff;
+            color: var(--primary-dark);
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            color: var(--ink);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 18px;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+
+        /* Card container */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 36px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.6rem;
+            color: var(--ink);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-desc {
+            font-size: 0.98rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* 1D vs 2D Comparison */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 28px 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .shape-box {
+            background: var(--paper-warm);
+            border: 1px solid var(--border-strong);
+            border-radius: 14px;
+            padding: 22px;
+            position: relative;
+        }
+
+        .shape-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+        }
+
+        .shape-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--ink);
+        }
+
+        .shape-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            background: var(--ink);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        /* Visual arrays */
+        .vector-strip {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin: 16px 0;
+            overflow-x: auto;
+            padding: 8px 4px;
+        }
+
+        .num-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            text-align: center;
+            min-width: 54px;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .num-cell:hover {
+            transform: translateY(-3px);
+            background: #eff6ff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15);
+        }
+
+        .ellipsis-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--text-faint);
+            padding: 0 8px;
+        }
+
+        /* Matrix interactive display */
+        .matrix-container {
+            position: relative;
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+            margin: 24px 0;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .matrix-table th {
+            font-weight: 600;
+            color: var(--text-faint);
+            padding: 6px 12px;
+            text-align: center;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+        }
+
+        .matrix-row-label {
+            color: #38bdf8;
+            font-weight: 600;
+            text-align: left !important;
+            padding-right: 16px !important;
+            white-space: nowrap;
+        }
+
+        .matrix-cell {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 8px 12px;
+            text-align: center;
+            transition: all 0.18s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .matrix-cell:hover, .matrix-cell.active {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: #60a5fa;
+            color: #ffffff;
+            transform: scale(1.04);
+            box-shadow: 0 0 14px rgba(96, 165, 250, 0.4);
+        }
+
+        .matrix-cell.col-highlight {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: #c084fc;
+        }
+
+        .matrix-cell.row-highlight {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: #34d399;
+        }
+
+        /* Dimension Explainer Pills */
+        .dimension-callout {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .dimension-callout strong {
+            color: var(--primary-dark);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Interactive Inspector Panel */
+        .inspector-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .inspector-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .inspector-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .inspector-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .inspector-desc {
+            font-size: 0.88rem;
+            color: var(--text-body);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--paper-warm);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .code-block {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            overflow-x: auto;
+            margin: 14px 0;
+            line-height: 1.6;
+        }
+
+        .code-keyword { color: #f43f5e; }
+        .code-fn { color: #38bdf8; }
+        .code-str { color: #34d399; }
+        .code-comment { color: #64748b; font-style: italic; }
+
+        /* Interactive Controls */
+        .control-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--ink);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--border-strong);
+        }
+
+        .btn-outline:hover {
+            background: var(--paper-warm);
+            color: var(--ink);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrap">
+        <header>
+            <div class="tag">Semantic Search Foundations</div>
+            <h1>Visualizing Embedding Shapes</h1>
+            <p class="subtitle">
+                How 5,000 text descriptions turn into a 2D matrix of shape <code>(5000, 384)</code>, and why this powers millisecond searches.
+            </p>
+        </header>
+
+        <!-- Section 1: 1D vs 2D -->
+        <section class="card">
+            <h2 class="card-title">1. Single String vs. Full Dataset</h2>
+            <p class="card-desc">
+                In the last lesson you created an embedding for one string. Now you are stacking all 5,000 movie embeddings into a single cohesive structure.
+            </p>
+
+            <div class="grid-2">
+                <!-- 1D Vector -->
+                <div class="shape-box">
+                    <div class="shape-header">
+                        <span class="shape-name">Single Query Embedding</span>
+                        <span class="shape-badge">shape: (384,)</span>
+                    </div>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        "teddy bear" → 1D Vector (Rank 1 Tensor)
+                    </p>
+                    <div class="vector-strip">
+                        <div class="num-cell">-0.062</div>
+                        <div class="num-cell">0.054</div>
+                        <div class="num-cell">0.052</div>
+                        <div class="ellipsis-cell">...</div>
+                        <div class="num-cell">-0.019</div>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 10px;">
+                        A single list of 384 floating-point coordinates pointing in semantic space.
+                    </p>
+                </div>
+
+                <!-- 2D Matrix -->
+                <div class="shape-box" style="border-color: #3b82f6;">
+                    <div class="shape-header">
+                        <span class="shape-name">Document Embeddings Store</span>
+                        <span class="shape-badge" style="background: #2563eb;">shape: (5000, 384)</span>
+                    </div>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        All 5,000 Movies → 2D Matrix (Table of Numbers)
+                    </p>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div>[ [-0.062, 0.054, ... -0.019], <span style="color:var(--text-faint);"># Movie 0</span></div>
+                        <div>  [ 0.018, -0.091, ...  0.043], <span style="color:var(--text-faint);"># Movie 1</span></div>
+                        <div style="color: var(--text-faint);">  ... (4998 more rows) ...</div>
+                        <div>  [-0.041,  0.033, ...  0.007] ] <span style="color:var(--text-faint);"># Movie 4999</span></div>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 10px;">
+                        5,000 rows stacked vertically, each row having 384 columns.
+                    </p>
+                </div>
+            </div>
+
+            <div class="dimension-callout">
+                <div>💡</div>
+                <div>
+                    In Python: <strong>embeddings.shape[0] == 5000</strong> (number of documents/rows), while <strong>embeddings.shape[1] == 384</strong> (number of dimensions/features per vector).
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Interactive Matrix Inspector -->
+        <section class="card">
+            <h2 class="card-title">2. Interactive Matrix Inspector</h2>
+            <p class="card-desc">
+                Hover or click on rows or columns below to inspect how individual movie embeddings map across semantic dimensions.
+            </p>
+
+            <div class="control-btns">
+                <button class="btn" onclick="highlightRow(0)">Select Movie #0 ("Toy Story")</button>
+                <button class="btn" onclick="highlightRow(1)">Select Movie #1 ("Inception")</button>
+                <button class="btn btn-outline" onclick="highlightCol(2)">Inspect Dimension 2</button>
+                <button class="btn btn-outline" onclick="clearHighlights()">Clear Selection</button>
+            </div>
+
+            <div class="matrix-container">
+                <table class="matrix-table" id="matrixTable">
+                    <thead>
+                        <tr>
+                            <th class="matrix-row-label">Movie / Dimension</th>
+                            <th>Dim 0</th>
+                            <th>Dim 1</th>
+                            <th>Dim 2</th>
+                            <th>...</th>
+                            <th>Dim 382</th>
+                            <th>Dim 383</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="row-0">
+                            <td class="matrix-row-label">#0: "Toy Story"</td>
+                            <td class="matrix-cell" data-row="0" data-col="0" data-val="0.042">0.042</td>
+                            <td class="matrix-cell" data-row="0" data-col="1" data-val="-0.081">-0.081</td>
+                            <td class="matrix-cell" data-row="0" data-col="2" data-val="0.125">0.125</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="matrix-cell" data-row="0" data-col="382" data-val="-0.034">-0.034</td>
+                            <td class="matrix-cell" data-row="0" data-col="383" data-val="0.061">0.061</td>
+                        </tr>
+                        <tr id="row-1">
+                            <td class="matrix-row-label">#1: "Inception"</td>
+                            <td class="matrix-cell" data-row="1" data-col="0" data-val="-0.015">-0.015</td>
+                            <td class="matrix-cell" data-row="1" data-col="1" data-val="0.093">0.093</td>
+                            <td class="matrix-cell" data-row="1" data-col="2" data-val="-0.044">-0.044</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="matrix-cell" data-row="1" data-col="382" data-val="0.088">0.088</td>
+                            <td class="matrix-cell" data-row="1" data-col="383" data-val="-0.012">-0.012</td>
+                        </tr>
+                        <tr id="row-2">
+                            <td class="matrix-row-label">#2: "The Lion King"</td>
+                            <td class="matrix-cell" data-row="2" data-col="0" data-val="0.038">0.038</td>
+                            <td class="matrix-cell" data-row="2" data-col="1" data-val="-0.076">-0.076</td>
+                            <td class="matrix-cell" data-row="2" data-col="2" data-val="0.119">0.119</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="matrix-cell" data-row="2" data-col="382" data-val="-0.029">-0.029</td>
+                            <td class="matrix-cell" data-row="2" data-col="383" data-val="0.054">0.054</td>
+                        </tr>
+                        <tr>
+                            <td class="matrix-row-label" style="color:var(--text-faint);">... (4,996 more)</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="ellipsis-cell">...</td>
+                        </tr>
+                        <tr id="row-4999">
+                            <td class="matrix-row-label">#4999: "Blood Freak"</td>
+                            <td class="matrix-cell" data-row="4999" data-col="0" data-val="-0.071">-0.071</td>
+                            <td class="matrix-cell" data-row="4999" data-col="1" data-val="0.024">0.024</td>
+                            <td class="matrix-cell" data-row="4999" data-col="2" data-val="-0.089">-0.089</td>
+                            <td class="ellipsis-cell">...</td>
+                            <td class="matrix-cell" data-row="4999" data-col="382" data-val="0.015">0.015</td>
+                            <td class="matrix-cell" data-row="4999" data-col="383" data-val="-0.063">-0.063</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Inspector Display Box -->
+            <div class="inspector-panel" id="inspectorBox">
+                <div class="inspector-info">
+                    <span class="inspector-title">Active Selection</span>
+                    <span class="inspector-val" id="inspectTarget">Row #0 ("Toy Story")</span>
+                </div>
+                <div class="inspector-info">
+                    <span class="inspector-title">Vector Slice</span>
+                    <span class="inspector-val" id="inspectSlice">embeddings[0, :]</span>
+                </div>
+                <div class="inspector-desc" id="inspectDesc">
+                    A 384-dimensional dense representation capturing the theme, tone, characters, and plot summary of Toy Story.
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Data Stats and Memory Layout -->
+        <section class="card">
+            <h2 class="card-title">3. Why NumPy & The .npy File Format?</h2>
+            <p class="card-desc">
+                Storing 5,000 vectors as plain JSON or text would be tens of megabytes and slow to parse. Here is what NumPy does:
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">5,000 × 384</div>
+                    <div class="stat-label">Matrix Dimensions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1,920,000</div>
+                    <div class="stat-label">Total Float Values</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">~7.68 MB</div>
+                    <div class="stat-label">Binary Size on Disk</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">&lt; 5 ms</div>
+                    <div class="stat-label">Load Time with np.load()</div>
+                </div>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># In your code:</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-comment"># Fast binary write: raw memory dump of IEEE 754 floats</span>
+np.<span class="code-fn">save</span>(<span class="code-str">"cache/movie_embeddings.npy"</span>, self.embeddings)
+
+<span class="code-comment"># Instant load on application startup (memory-mapped ready)</span>
+self.embeddings = np.<span class="code-fn">load</span>(<span class="code-str">"cache/movie_embeddings.npy"</span>)
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const cells = document.querySelectorAll('.matrix-cell');
+        const inspectTarget = document.getElementById('inspectTarget');
+        const inspectSlice = document.getElementById('inspectSlice');
+        const inspectDesc = document.getElementById('inspectDesc');
+
+        const movieNames = {
+            0: "Toy Story",
+            1: "Inception",
+            2: "The Lion King",
+            4999: "Blood Freak"
+        };
+
+        cells.forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                const row = cell.getAttribute('data-row');
+                const col = cell.getAttribute('data-col');
+                const val = cell.getAttribute('data-val');
+                const mName = movieNames[row] || `Movie #${row}`;
+
+                inspectTarget.textContent = `${mName} (Row ${row}, Dim ${col})`;
+                inspectSlice.textContent = `embeddings[${row}, ${col}] = ${val}`;
+                inspectDesc.textContent = `Value at dimension ${col} for ${mName}. All 384 dimensions together locate this movie in semantic space.`;
+            });
+        });
+
+        function clearHighlights() {
+            document.querySelectorAll('.matrix-cell').forEach(c => {
+                c.classList.remove('active', 'row-highlight', 'col-highlight');
+            });
+            inspectTarget.textContent = "None";
+            inspectSlice.textContent = "embeddings[:, :]";
+            inspectDesc.textContent = "Hover over any cell or click a button above to inspect.";
+        }
+
+        function highlightRow(rowIdx) {
+            clearHighlights();
+            const rowElem = document.getElementById(`row-${rowIdx}`);
+            if (rowElem) {
+                rowElem.querySelectorAll('.matrix-cell').forEach(c => c.classList.add('row-highlight'));
+            }
+            const name = movieNames[rowIdx];
+            inspectTarget.textContent = `Row #${rowIdx} ("${name}")`;
+            inspectSlice.textContent = `embeddings[${rowIdx}, :]  -> Shape: (384,)`;
+            inspectDesc.textContent = `The complete 384-dimensional vector for "${name}". This entire row is what gets compared against a user query!`;
+        }
+
+        function highlightCol(colIdx) {
+            clearHighlights();
+            document.querySelectorAll(`.matrix-cell[data-col="${colIdx}"]`).forEach(c => {
+                c.classList.add('col-highlight');
+            });
+            inspectTarget.textContent = `Dimension Column #${colIdx}`;
+            inspectSlice.textContent = `embeddings[:, ${colIdx}]  -> Shape: (5000,)`;
+            inspectDesc.textContent = `This column represents the value of latent semantic dimension #${colIdx} across all 5,000 movies in your database.`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspecting NumPy Embeddings: A Hands-On Field Guide</title>
+    <meta name="description" content="A dense, interactive guide to inspecting NumPy embedding arrays: dtype, shape, memory layout, the .npy file format, norms, and dot products.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a; --paper: #f8fafc; --card-bg: #ffffff;
+            --text-body: #334155; --text-secondary: #64748b; --text-faint: #94a3b8;
+            --primary: #3b82f6; --primary-dark: #1d4ed8;
+            --emerald: #10b981; --amber: #f59e0b; --rose: #f43f5e;
+            --purple: #8b5cf6; --cyan: #06b6d4;
+            --border: rgba(15, 23, 42, 0.08); --border-strong: rgba(15, 23, 42, 0.16);
+            --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --code-bg: #0f172a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--paper); color: var(--text-body); line-height: 1.7;
+            -webkit-font-smoothing: antialiased; overflow-x: hidden;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background-image: radial-gradient(circle at 25px 25px, rgba(15, 23, 42, 0.04) 2px, transparent 0);
+            background-size: 32px 32px; pointer-events: none; z-index: -1;
+        }
+        .wrap { max-width: 1040px; margin: 0 auto; padding: 64px 24px 120px; }
+        header { text-align: center; margin-bottom: 48px; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; background: #eff6ff; color: var(--primary-dark);
+            border-radius: 9999px; font-size: 0.82rem; font-weight: 600;
+            letter-spacing: 0.04em; text-transform: uppercase;
+            margin-bottom: 18px; border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(2.2rem, 5vw, 3.4rem); color: var(--ink);
+            line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 18px;
+        }
+        .subtitle { font-size: 1.12rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px; box-shadow: var(--shadow-sm);
+            margin-bottom: 36px; transition: box-shadow 0.2s ease;
+        }
+        .card:hover { box-shadow: var(--shadow-md); }
+        .card-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.6rem; color: var(--ink); margin-bottom: 6px; letter-spacing: -0.01em;
+        }
+        .card-kicker {
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em;
+            text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px;
+        }
+        .card p { margin-bottom: 14px; }
+        .card p:last-child { margin-bottom: 0; }
+        code {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.86em;
+            background: #eef2ff; color: var(--primary-dark);
+            padding: 2px 6px; border-radius: 6px;
+        }
+        pre {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.84rem;
+            background: var(--code-bg); color: #e2e8f0;
+            padding: 18px 20px; border-radius: 14px; overflow-x: auto;
+            line-height: 1.65; margin: 14px 0;
+        }
+        pre .c { color: #64748b; } pre .s { color: #86efac; }
+        pre .n { color: #fbbf24; } pre .k { color: #93c5fd; }
+        pre .f { color: #c4b5fd; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        @media (max-width: 760px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        .stat-box {
+            background: var(--paper); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px 18px;
+        }
+        .stat-box .lbl { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+        .stat-box .val { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--ink); margin-top: 4px; }
+        .stat-box .sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+        .callout {
+            border-left: 4px solid var(--primary); background: #eff6ff;
+            border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 16px 0; font-size: 0.95rem;
+        }
+        .callout.amber { border-color: var(--amber); background: #fffbeb; }
+        .callout.emerald { border-color: var(--emerald); background: #ecfdf5; }
+        .callout.rose { border-color: var(--rose); background: #fff1f2; }
+        .toc { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 48px; }
+        .toc a {
+            font-size: 0.85rem; font-weight: 600; color: var(--primary-dark);
+            background: #fff; border: 1px solid var(--border-strong);
+            padding: 8px 16px; border-radius: 9999px; text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .toc a:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        select {
+            font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--ink);
+            padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-strong);
+            background: #fff; cursor: pointer;
+        }
+        .btn {
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
+            color: #fff; background: var(--primary); border: none; cursor: pointer;
+            padding: 9px 18px; border-radius: 10px; transition: background 0.15s ease;
+        }
+        .btn:hover { background: var(--primary-dark); }
+        canvas { display: block; }
+        .viz-tip {
+            position: absolute; pointer-events: none; z-index: 20;
+            background: var(--ink); color: #e2e8f0; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem; padding: 6px 10px; border-radius: 8px;
+            opacity: 0; transition: opacity 0.1s ease; white-space: nowrap;
+        }
+        .gauge-track {
+            height: 22px; border-radius: 9999px; overflow: hidden;
+            background: linear-gradient(90deg, #fee2e2 0%, #f1f5f9 50%, #d1fae5 100%);
+            position: relative; border: 1px solid var(--border);
+        }
+        .gauge-marker {
+            position: absolute; top: -4px; bottom: -4px; width: 4px;
+            background: var(--ink); border-radius: 2px; transition: left 0.3s ease;
+        }
+        table.dense { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        table.dense th {
+            text-align: left; font-size: 0.72rem; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--text-faint);
+            padding: 8px 10px; border-bottom: 2px solid var(--border-strong);
+        }
+        table.dense td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        table.dense td.mono, .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+        .hexbyte {
+            display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+            padding: 4px 7px; margin: 2px; border-radius: 6px; background: var(--paper);
+            border: 1px solid var(--border);
+        }
+        .hexbyte.hl { background: #fef3c7; border-color: var(--amber); font-weight: 700; }
+        .hexbyte.hl2 { background: #dbeafe; border-color: var(--primary); font-weight: 700; }
+        .hexbyte.hl3 { background: #d1fae5; border-color: var(--emerald); font-weight: 700; }
+        .pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        footer { text-align: center; color: var(--text-faint); font-size: 0.85rem; margin-top: 24px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <div class="tag">Interactive Field Guide &middot; NumPy &times; sentence-transformers</div>
+        <h1>Inspecting NumPy Embeddings</h1>
+        <p class="subtitle">Embeddings are not magic — they are plain <code>numpy.ndarray</code> objects full of <code>float32</code> numbers. This page shows you exactly what is inside, how the <code>.npy</code> file on your disk is laid out, and how to interrogate every byte of it. All demos run live in your browser on realistic (synthetic) 384-dim vectors.</p>
+    </header>
+
+    <nav class="toc">
+        <a href="#anatomy">1 · Array Anatomy</a>
+        <a href="#inspector">2 · Vector Inspector</a>
+        <a href="#npy">3 · The .npy File Format</a>
+        <a href="#storage">4 · Storage Calculator</a>
+        <a href="#dotlab">5 · Dot Product Lab</a>
+        <a href="#heatmap">6 · Similarity Heatmap</a>
+        <a href="#cheatsheet">7 · Python Cheat Sheet</a>
+    </nav>
+
+    <!-- ================= SECTION 1 ================= -->
+    <section class="card" id="anatomy">
+        <div class="card-kicker">Section 1</div>
+        <h2 class="card-title">What exactly <em>is</em> an embedding array?</h2>
+        <p>When your code runs <code>model.encode(["A bear attacks a man"])</code>, the transformer reduces the sentence to one point in a 384-dimensional space. NumPy hands you that point as an <code>ndarray</code> — a thin Python wrapper around a contiguous block of C memory. Five attributes tell you everything about that block:</p>
+        <table class="dense">
+            <tr><th>Attribute</th><th>Value in this project</th><th>What it means</th></tr>
+            <tr>
+                <td class="mono">type(emb)</td><td class="mono">numpy.ndarray</td>
+                <td>A strided view over a raw memory buffer — not a Python list. Indexing, slicing, and arithmetic are vectorized C loops.</td>
+            </tr>
+            <tr>
+                <td class="mono">emb.dtype</td><td class="mono">float32</td>
+                <td>Each dimension is a 4-byte IEEE-754 float. 7 significant decimal digits, range ~&plusmn;3.4&times;10<sup>38</sup>. Half the memory of <code>float64</code>, plenty for ML.</td>
+            </tr>
+            <tr>
+                <td class="mono">emb.shape</td><td class="mono">(384,)</td>
+                <td>1-D vector with 384 elements. The trailing comma matters: <code>(384,)</code> is a 1-tuple — a <em>vector</em>, not a matrix. A batch is <code>(5000, 384)</code>.</td>
+            </tr>
+            <tr>
+                <td class="mono">emb.strides</td><td class="mono">(4,)</td>
+                <td>Bytes to jump per index step: 4 bytes = one float32. For a <code>(5000, 384)</code> C-contiguous matrix it is <code>(1536, 4)</code> — 384&times;4 = 1536 bytes per row.</td>
+            </tr>
+            <tr>
+                <td class="mono">emb.nbytes</td><td class="mono">1536</td>
+                <td>Total payload: 384 &times; 4 = <strong>1,536 bytes = 1.5 KB</strong> per document. 5,000 movies &rarr; ~7.3 MB. Trivially small.</td>
+            </tr>
+        </table>
+        <div class="callout">
+            <strong>Verified live in this project:</strong> encoding <code>"A bear attacks a man in the wilderness"</code> with <code>all-MiniLM-L6-v2</code> returns <code>float32</code>, shape <code>(384,)</code>, values in <code>[-0.160, 0.140]</code>, and L2 norm <code>0.99999994</code>. MiniLM normalizes every output to the unit sphere — that is why <strong>dot product = cosine similarity</strong> here, with no extra normalization step.
+        </div>
+        <div class="callout amber">
+            <strong>Why float32 and not float64?</strong> GPU/CPU inference happens in float32, and embeddings only need to <em>rank</em> documents relative to each other. Doubling precision would double RAM, disk, and bandwidth while changing essentially zero search results.
+        </div>
+    </section>
+    <!-- ================= SECTION 2 ================= -->
+    <section class="card" id="inspector">
+        <div class="card-kicker">Section 2 · Live Demo</div>
+        <h2 class="card-title">The Vector Inspector</h2>
+        <p>Below are 8 synthetic movie embeddings, built the same way yours are: one 384-dim vector per <code>"title: description"</code> string. Pick a movie. Each of the 384 cells is one dimension, colored by sign and magnitude (<span style="color:var(--rose);font-weight:700">red = negative</span>, <span style="color:var(--primary);font-weight:700">blue = positive</span>, pale = near zero). Hover to read exact values.</p>
+        <p style="margin-top:6px">
+            <select id="movieSelect"></select>
+            <span class="pill" id="genrePill" style="margin-left:10px"></span>
+        </p>
+        <div style="position:relative; margin-top:14px">
+            <canvas id="vecCanvas" width="976" height="96" style="width:100%; height:96px; border:1px solid var(--border); border-radius:12px; cursor:crosshair"></canvas>
+            <div class="viz-tip" id="vecTip"></div>
+        </div>
+        <div class="grid-3" style="margin-top:18px">
+            <div class="stat-box"><div class="lbl">shape / dtype</div><div class="val" id="stShape">—</div><div class="sub">384 float32 values = 1,536 bytes</div></div>
+            <div class="stat-box"><div class="lbl">min / max</div><div class="val" id="stMinMax">—</div><div class="sub">spread of dimension values</div></div>
+            <div class="stat-box"><div class="lbl">L2 norm</div><div class="val" id="stNorm">—</div><div class="sub">&asymp; 1.0 &rarr; lives on the unit sphere</div></div>
+        </div>
+        <div class="callout emerald">
+            <strong>How to read this:</strong> individual dimensions have no human-readable meaning — dim 17 is not "bear-ness". Meaning lives in the <em>pattern across all 384 values</em>, and only shows up when you compare two vectors (Section 5). What you <em>can</em> verify from one vector alone: correct shape, sane value range (no NaN/Inf), and norm &asymp; 1.
+        </div>
+        <p>The Python equivalent of everything above:</p>
+        <pre><span class="k">from</span> lib.semantic_search <span class="k">import</span> SemanticSearch
+s = SemanticSearch()
+emb = s.generate_embedding(<span class="s">"A bear attacks a man in the wilderness"</span>)
+emb.shape          <span class="c"># (384,)</span>
+emb.dtype          <span class="c"># dtype('float32')</span>
+emb.min(), emb.max()
+(emb**<span class="n">2</span>).sum()**<span class="n">0.5</span>  <span class="c"># 0.99999994 — unit norm</span>
+emb[:<span class="n">8</span>]            <span class="c"># slice: first 8 dims (a VIEW, no copy)</span></pre>
+    </section>
+
+    <!-- ================= SECTION 3 ================= -->
+    <section class="card" id="npy">
+        <div class="card-kicker">Section 3</div>
+        <h2 class="card-title">Anatomy of the <code>.npy</code> file on disk</h2>
+        <p>Your <code>build_embeddings()</code> calls <code>np.save("cache/movie_embeddings.npy", self.embeddings)</code>. That file is <em>not</em> pickled and <em>not</em> text — it is a tiny header followed by a raw dump of the array's memory. Byte by byte:</p>
+        <div style="margin:16px 0; line-height:2.4">
+            <span class="hexbyte hl">93</span><span class="hexbyte hl">4E 55 4D 50 59</span>
+            <span class="hexbyte hl2">01</span><span class="hexbyte hl2">00</span>
+            <span class="hexbyte hl3">76 00</span>
+            <span class="hexbyte">7B 27 64 65 73 63 72 27 3A 20 27 3C 66 34 27 2C 20 27 66 6F 72 74 72 61 6E 5F 6F 72 64 65 72 27 3A 20 46 61 6C 73 65 2C 20 27 73 68 61 70 65 27 3A 20 28 35 30 30 30 2C 20 33 38 34 29 2C 20 7D …</span>
+            <span class="hexbyte" style="background:#ede9fe; border-color:var(--purple)">raw float32 payload …</span>
+        </div>
+        <table class="dense">
+            <tr><th>Bytes</th><th>Field</th><th>Meaning</th></tr>
+            <tr><td class="mono">0–5</td><td><span class="pill" style="background:#fef3c7;color:#92400e">magic</span> <code>\x93NUMPY</code></td><td>Identifies the format. <code>np.load</code> checks this first.</td></tr>
+            <tr><td class="mono">6–7</td><td><span class="pill" style="background:#dbeafe;color:#1e40af">version</span> <code>01 00</code></td><td>Format v1.0.</td></tr>
+            <tr><td class="mono">8–9</td><td><span class="pill" style="background:#d1fae5;color:#065f46">header len</span> <code>76 00</code></td><td>Little-endian uint16: the header dict is 118 bytes.</td></tr>
+            <tr><td class="mono">10–127</td><td><code>header dict</code></td><td>A literal Python dict: <code>{'descr': '&lt;f4', 'fortran_order': False, 'shape': (5000, 384), }</code> — dtype, byte order, and shape. <strong>The entire metadata of your embedding store fits in one line of ASCII.</strong></td></tr>
+            <tr><td class="mono">128…</td><td><code>payload</code></td><td>5000 &times; 384 &times; 4 = 7,680,000 bytes of raw float32, row-major. Row <em>i</em> starts at byte <code>128 + i×1536</code>.</td></tr>
+        </table>
+        <div class="callout">
+            <strong>Consequence:</strong> because the payload is a fixed-stride memory dump, <code>np.load(path, mmap_mode='r')</code> can memory-map the file — the OS pages rows in on demand. You can inspect a 10 GB embedding matrix on a laptop with 8 GB RAM. <code>embs[42]</code> reads only that row's 1,536 bytes from disk.
+        </div>
+        <div class="callout rose">
+            <strong>Gotcha:</strong> <code>np.save</code> is <em>not</em> portable like JSON. It assumes NumPy on the reading side and stores native dtype/layout. Perfect for a local cache (your use case), wrong for an API response or cross-language pipeline — that's what JSON/Parquet are for.
+        </div>
+    </section>
+    <!-- ================= SECTION 4 ================= -->
+    <section class="card" id="storage">
+        <div class="card-kicker">Section 4 · Live Calculator</div>
+        <h2 class="card-title">How big is the embedding store, really?</h2>
+        <p>Storage is pure arithmetic: <code>bytes = 128 (header) + N &times; 384 &times; 4</code>. Compare against the naive alternative — serializing the same floats as JSON text (~15 characters per number). Drag the slider:</p>
+        <p style="margin:18px 0 6px"><strong id="nLabel">5,000 documents</strong></p>
+        <input type="range" id="nSlider" min="100" max="1000000" step="100" value="5000">
+        <div class="grid-3" style="margin-top:18px">
+            <div class="stat-box"><div class="lbl">.npy on disk</div><div class="val" id="szNpy" style="color:var(--emerald)">—</div><div class="sub">raw float32 + 128-byte header</div></div>
+            <div class="stat-box"><div class="lbl">equivalent JSON</div><div class="val" id="szJson" style="color:var(--rose)">—</div><div class="sub">~15 bytes per float, plus brackets</div></div>
+            <div class="stat-box"><div class="lbl">JSON penalty</div><div class="val" id="szRatio">—</div><div class="sub">and it must be parsed; .npy is memcpy</div></div>
+        </div>
+        <div class="callout amber">
+            <strong>Speed, not just size:</strong> loading a <code>.npy</code> is a header parse + one <code>read()</code> (or <code>mmap</code>) into a preallocated buffer — no tokenizing, no float parsing. Loading the JSON version at 1M docs would take seconds and ~4&times; peak RAM. This is why <code>np.save</code> is the right call for your cache.
+        </div>
+    </section>
+
+    <!-- ================= SECTION 5 ================= -->
+    <section class="card" id="dotlab">
+        <div class="card-kicker">Section 5 · Live Lab</div>
+        <h2 class="card-title">The Dot Product Lab — where similarity comes from</h2>
+        <p>Semantic search is one line: <code>scores = embeddings @ query_vec</code>. Because every vector is unit-normalized, each score <em>is</em> the cosine of the angle between two movies. Pick a pair and watch the score, plus <strong>which dimensions contribute most</strong> to it:</p>
+        <p style="margin:10px 0 16px">
+            <select id="dotA"></select>
+            <span style="margin:0 12px; font-weight:700; color:var(--text-faint)">&middot;</span>
+            <select id="dotB"></select>
+        </p>
+        <div class="gauge-track"><div class="gauge-marker" id="gaugeMarker" style="left:50%"></div></div>
+        <div class="grid-2" style="margin-top:16px">
+            <div class="stat-box"><div class="lbl">dot product (= cosine sim)</div><div class="val" id="dotVal">—</div><div class="sub" id="dotInterp">—</div></div>
+            <div class="stat-box"><div class="lbl">top contributing dims</div><div class="val" style="font-size:0.95rem" id="dotDims">—</div><div class="sub">dims where a[i]·b[i] is largest</div></div>
+        </div>
+        <div class="callout">
+            <strong>The mechanic:</strong> <code>a·b = Σ a[i]×b[i]</code> over 384 terms. A dimension only pushes the score up when <em>both</em> vectors agree in sign there. Two survival movies share the same "genre signature" across hundreds of dims, so thousands of tiny products accumulate into a high score. Unrelated movies have uncorrelated signs — products cancel out around zero.
+        </div>
+        <p>Equivalent NumPy (this is the whole search ranking):</p>
+        <pre>q = s.generate_embedding(<span class="s">"wilderness survival bear attack"</span>)
+scores = embeddings @ q          <span class="c"># (5000,) — one score per movie, in one C loop</span>
+top5 = scores.argsort()[::-<span class="n">1</span>][:<span class="n">5</span>]  <span class="c"># indices of the 5 best matches</span></pre>
+    </section>
+
+    <!-- ================= SECTION 6 ================= -->
+    <section class="card" id="heatmap">
+        <div class="card-kicker">Section 6 · Live Demo</div>
+        <h2 class="card-title">Similarity Heatmap — the matrix <code>E @ E.T</code></h2>
+        <p>Compute every pairwise dot product at once with one matrix multiply and the structure of your corpus becomes visible: <strong>blocks of high similarity along the diagonal = genres</strong>. Hover any cell.</p>
+        <div style="position:relative; display:flex; justify-content:center; margin-top:16px">
+            <canvas id="heatCanvas" width="520" height="520" style="max-width:100%; cursor:crosshair"></canvas>
+            <div class="viz-tip" id="heatTip"></div>
+        </div>
+        <div class="callout emerald">
+            <strong>Try it on your real data:</strong> <code>S = embs @ embs.T</code> gives a <code>(5000, 5000)</code> float32 matrix — 100 MB, fine in RAM. Rows where the off-diagonal values are unexpectedly high reveal near-duplicate descriptions; a dead-flat row hints at a broken/empty document. The heatmap is a <em>data-quality</em> tool, not just a visual.
+        </div>
+    </section>
+    <!-- ================= SECTION 7 ================= -->
+    <section class="card" id="cheatsheet">
+        <div class="card-kicker">Section 7 · Reference</div>
+        <h2 class="card-title">Inspection Cheat Sheet — run these yourself</h2>
+        <p>Everything on this page reduces to a handful of one-liners. After you run <code>build_embeddings()</code> once (which creates <code>cache/movie_embeddings.npy</code>), open a REPL from the project root with <code>uv run python</code> and interrogate away:</p>
+        <pre><span class="k">import</span> numpy <span class="k">as</span> np
+
+<span class="c"># --- Load & identity ---</span>
+embs = np.load(<span class="s">"cache/movie_embeddings.npy"</span>)
+embs.shape, embs.dtype, embs.nbytes   <span class="c"># (5000, 384), float32, ~7.3MB</span>
+embs.flags[<span class="s">'C_CONTIGUOUS'</span>]           <span class="c"># True → rows laid out back-to-back</span>
+
+<span class="c"># --- Health checks ---</span>
+np.isnan(embs).any()                  <span class="c"># False — no poisoned vectors</span>
+np.isfinite(embs).all()               <span class="c"># True — no Inf</span>
+norms = np.linalg.norm(embs, axis=<span class="n">1</span>)  <span class="c"># (5000,) — one norm per movie</span>
+norms.min(), norms.max()              <span class="c"># ≈ (1.0, 1.0) for MiniLM</span>
+
+<span class="c"># --- Slicing = free views (no copy!) ---</span>
+embs[<span class="n">0</span>]            <span class="c"># movie 0's full 384-dim vector</span>
+embs[<span class="n">0</span>, :<span class="n">5</span>]       <span class="c"># its first 5 dims</span>
+embs[:, <span class="n">17</span>]        <span class="c"># dim 17 across ALL movies — a "feature column"</span>
+embs[:<span class="n">3</span>]           <span class="c"># first 3 movies → (3, 384)</span>
+
+<span class="c"># --- Search & compare ---</span>
+embs[<span class="n">0</span>] @ embs[<span class="n">1</span>]                   <span class="c"># dot product = cosine sim (unit norm)</span>
+np.dot(embs, embs[<span class="n">7</span>]).argmax()       <span class="c"># most-similar movie to movie 7… is 7</span>
+(embs @ embs.T).shape               <span class="c"># (5000, 5000) full similarity matrix</span>
+
+<span class="c"># --- Big-file mode ---</span>
+embs = np.load(<span class="s">"cache/movie_embeddings.npy"</span>, mmap_mode=<span class="s">'r'</span>)  <span class="c"># lazy!</span></pre>
+        <div class="callout">
+            <strong>Mental model to keep:</strong> an embedding matrix is a spreadsheet where rows are documents and columns are learned, unlabeled features. <code>embs[i]</code> selects a document; <code>embs[:, j]</code> selects a feature; <code>@</code> compares documents. Everything else in semantic search is bookkeeping that maps those row indices back to <code>documents[i]</code> via your <code>document_map</code>.
+        </div>
+        <div class="callout rose">
+            <strong>Two traps:</strong> (1) <code>embs[i]</code> aligns with <code>documents[i]</code> only because <code>build_embeddings</code> encoded them in order — scramble one list and the mapping silently breaks. (2) A slice like <code>embs[:10]</code> is a <em>view</em>: writing to it mutates the parent array. Use <code>.copy()</code> when you want isolation.
+        </div>
+    </section>
+
+    <footer>
+        Built for <span class="mono">rag-search-engine</span> · synthetic vectors are generated deterministically in-browser (seeded RNG) — shapes, scales, and norms match real <span class="mono">all-MiniLM-L6-v2</span> output.
+    </footer>
+</div>
+<script>
+// ---------- Seeded RNG + synthetic 384-dim embeddings ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const DIM = 384;
+function randVec(rng){const v=new Float32Array(DIM);for(let i=0;i<DIM;i++)v[i]=(rng()-0.5)*2;return v;}
+function normalize(v){let s=0;for(let i=0;i<DIM;i++)s+=v[i]*v[i];s=Math.sqrt(s);const o=new Float32Array(DIM);for(let i=0;i<DIM;i++)o[i]=v[i]/s;return o;}
+function combine(g,u,a,b){const v=new Float32Array(DIM);for(let i=0;i<DIM;i++)v[i]=a*g[i]+b*u[i];return normalize(v);}
+
+const GENRES = {
+    survival:{label:"Wilderness Survival", color:"#10b981", bg:"#d1fae5"},
+    space:{label:"Space Sci-Fi", color:"#3b82f6", bg:"#dbeafe"},
+    romance:{label:"Romance", color:"#f43f5e", bg:"#ffe4e6"},
+    family:{label:"Family Comedy", color:"#f59e0b", bg:"#fef3c7"}
+};
+const genreVecs = {}; { let i=0; for(const k in GENRES){ genreVecs[k]=randVec(mulberry32(1000+i*77)); i++; } }
+
+const MOVIES = [
+    {name:"The Revenant", g:"survival", desc:"A frontiersman fights a bear and the frozen wild to survive."},
+    {name:"Backcountry", g:"survival", desc:"A couple is stalked by a black bear deep in the woods."},
+    {name:"Interstellar", g:"space", desc:"Astronauts cross a wormhole to save humanity from extinction."},
+    {name:"Gravity", g:"space", desc:"Two astronauts stranded in orbit after debris destroys their shuttle."},
+    {name:"The Notebook", g:"romance", desc:"A lifelong love story retold from an old man's notebook."},
+    {name:"Pride & Prejudice", g:"romance", desc:"Witty Elizabeth Bennet spars with the proud Mr. Darcy."},
+    {name:"Paddington", g:"family", desc:"A polite bear from Peru charms a London family."},
+    {name:"Toy Story", g:"family", desc:"A cowboy doll feels replaced when a new space toy arrives."}
+];
+MOVIES.forEach((m,i)=>{ m.emb = combine(genreVecs[m.g], randVec(mulberry32(5000+i*131)), 0.75, 0.55); });
+
+function dot(a,b){let s=0;for(let i=0;i<DIM;i++)s+=a[i]*b[i];return s;}
+function fmt(x,d=4){return (x>=0?"+":"")+x.toFixed(d);}
+
+// ---------- Section 2: Vector Inspector ----------
+const vecCanvas = document.getElementById('vecCanvas');
+const vecTip = document.getElementById('vecTip');
+const movieSelect = document.getElementById('movieSelect');
+MOVIES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`${m.name} — ${m.desc}`; movieSelect.appendChild(o); });
+
+function drawVector(idx){
+    const m = MOVIES[idx], v = m.emb, ctx = vecCanvas.getContext('2d');
+    const W = vecCanvas.width, H = vecCanvas.height, cw = W / DIM;
+    let mn=Infinity, mx=-Infinity, nrm=0;
+    for(let i=0;i<DIM;i++){ const x=v[i]; if(x<mn)mn=x; if(x>mx)mx=x; nrm+=x*x; }
+    nrm=Math.sqrt(nrm);
+    const scale = Math.max(Math.abs(mn), Math.abs(mx));
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<DIM;i++){
+        const x=v[i], t=Math.min(1, Math.abs(x)/scale);
+        ctx.fillStyle = x>=0 ? `rgba(59,130,246,${0.12+0.88*t})` : `rgba(244,63,94,${0.12+0.88*t})`;
+        const h = 8 + (H-16)*t;
+        ctx.fillRect(i*cw, (H-h)/2, Math.max(1,cw-0.4), h);
+    }
+    document.getElementById('stShape').textContent = `(${DIM},) float32`;
+    document.getElementById('stMinMax').textContent = `${mn.toFixed(3)} … ${mx.toFixed(3)}`;
+    document.getElementById('stNorm').textContent = nrm.toFixed(6);
+    const g = GENRES[m.g], pill = document.getElementById('genrePill');
+    pill.textContent = g.label; pill.style.background = g.bg; pill.style.color = g.color;
+}
+movieSelect.addEventListener('change', e=>drawVector(+e.target.value));
+vecCanvas.addEventListener('mousemove', e=>{
+    const r = vecCanvas.getBoundingClientRect();
+    const i = Math.min(DIM-1, Math.floor((e.clientX-r.left)/r.width*DIM));
+    const v = MOVIES[+movieSelect.value].emb;
+    vecTip.style.opacity = 1;
+    vecTip.style.left = (e.clientX - r.left + 12) + 'px';
+    vecTip.style.top = (e.clientY - r.top - 34) + 'px';
+    vecTip.textContent = `emb[${i}] = ${fmt(v[i],5)}`;
+});
+vecCanvas.addEventListener('mouseleave', ()=>vecTip.style.opacity=0);
+drawVector(0);
+// ---------- Section 4: Storage Calculator ----------
+const nSlider = document.getElementById('nSlider');
+function humanBytes(b){
+    if (b >= 1e9) return (b/1e9).toFixed(2)+' GB';
+    if (b >= 1e6) return (b/1e6).toFixed(2)+' MB';
+    if (b >= 1e3) return (b/1e3).toFixed(1)+' KB';
+    return b+' B';
+}
+function updateStorage(){
+    const n = +nSlider.value;
+    const npy = 128 + n*DIM*4;
+    const json = n*DIM*15 + n*4 + 2;
+    document.getElementById('nLabel').textContent = n.toLocaleString()+' documents';
+    document.getElementById('szNpy').textContent = humanBytes(npy);
+    document.getElementById('szJson').textContent = humanBytes(json);
+    document.getElementById('szRatio').textContent = '×'+(json/npy).toFixed(1);
+}
+nSlider.addEventListener('input', updateStorage);
+updateStorage();
+
+// ---------- Section 5: Dot Product Lab ----------
+const dotA = document.getElementById('dotA'), dotB = document.getElementById('dotB');
+MOVIES.forEach((m,i)=>{ for(const sel of [dotA,dotB]){ const o=document.createElement('option'); o.value=i; o.textContent=m.name; sel.appendChild(o);} });
+dotB.value = 1;
+function updateDot(){
+    const a = MOVIES[+dotA.value], b = MOVIES[+dotB.value];
+    const score = dot(a.emb, b.emb);
+    document.getElementById('dotVal').textContent = fmt(score, 4);
+    document.getElementById('gaugeMarker').style.left = `calc(${((score+0.2)/1.2*100).toFixed(1)}% - 2px)`;
+    let interp;
+    if (a===b) interp = 'same vector → score = ‖a‖² = 1.0000 (proof of unit norm)';
+    else if (score > 0.55) interp = 'same genre signature → strong agreement across dims';
+    else if (score > 0.15) interp = 'some shared themes';
+    else interp = 'unrelated → signs cancel, score ≈ 0';
+    document.getElementById('dotInterp').textContent = interp;
+    const contrib = [];
+    for(let i=0;i<DIM;i++) contrib.push([a.emb[i]*b.emb[i], i]);
+    contrib.sort((x,y)=>y[0]-x[0]);
+    document.getElementById('dotDims').textContent =
+        contrib.slice(0,4).map(([c,i])=>`d${i}:${fmt(c,3)}`).join('  ');
+}
+dotA.addEventListener('change', updateDot);
+dotB.addEventListener('change', updateDot);
+updateDot();
+
+// ---------- Section 6: Similarity Heatmap ----------
+const heatCanvas = document.getElementById('heatCanvas');
+const heatTip = document.getElementById('heatTip');
+const N = MOVIES.length, cell = (heatCanvas.width - 130) / N, pad = 130;
+function heatColor(v){ // white → amber → emerald
+    const t = Math.max(0, Math.min(1, v));
+    const r = Math.round(248 - t*(248-16)), g = Math.round(250 - t*(250-185)), b = Math.round(252 - t*(252-129));
+    return `rgb(${r},${g},${b})`;
+}
+function drawHeat(){
+    const ctx = heatCanvas.getContext('2d');
+    ctx.clearRect(0,0,heatCanvas.width,heatCanvas.height);
+    ctx.font = '600 11px "JetBrains Mono", monospace';
+    for(let i=0;i<N;i++){
+        ctx.fillStyle = GENRES[MOVIES[i].g].color;
+        ctx.textAlign = 'right';
+        ctx.fillText(MOVIES[i].name, pad-10, pad + i*cell + cell/2 + 4);
+        ctx.save();
+        ctx.translate(pad + i*cell + cell/2 + 4, pad-10);
+        ctx.rotate(-Math.PI/4); ctx.textAlign = 'right';
+        ctx.fillText(MOVIES[i].name, 0, 0);
+        ctx.restore();
+    }
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+        const s = dot(MOVIES[i].emb, MOVIES[j].emb);
+        ctx.fillStyle = heatColor(s);
+        ctx.fillRect(pad+j*cell, pad+i*cell, cell-2, cell-2);
+        ctx.fillStyle = '#0f172a'; ctx.textAlign='center';
+        ctx.font = '700 10px "JetBrains Mono", monospace';
+        ctx.fillText(s.toFixed(2), pad+j*cell+(cell-2)/2, pad+i*cell+(cell-2)/2+4);
+        ctx.font = '600 11px "JetBrains Mono", monospace';
+    }
+}
+heatCanvas.addEventListener('mousemove', e=>{
+    const r = heatCanvas.getBoundingClientRect();
+    const sx = heatCanvas.width / r.width;
+    const j = Math.floor(((e.clientX-r.left)*sx - pad)/cell);
+    const i = Math.floor(((e.clientY-r.top)*sx - pad)/cell);
+    if(i>=0 && i<N && j>=0 && j<N){
+        const s = dot(MOVIES[i].emb, MOVIES[j].emb);
+        heatTip.style.opacity = 1;
+        heatTip.style.left = (e.clientX - r.left + 12)+'px';
+        heatTip.style.top = (e.clientY - r.top - 34)+'px';
+        heatTip.textContent = `${MOVIES[i].name} · ${MOVIES[j].name} = ${s.toFixed(4)}`;
+    } else heatTip.style.opacity = 0;
+});
+heatCanvas.addEventListener('mouseleave', ()=>heatTip.style.opacity=0);
+drawHeat();
+</script>
+</body>
+</html>

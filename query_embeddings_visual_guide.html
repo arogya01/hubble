@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Embeddings: Mapping Search Queries into Vector Space</title>
+    <meta name="description" content="An interactive visual guide exploring how user search queries are converted into 384-dimensional dense vectors to enable semantic retrieval.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0c0a09;
+            --paper: #faf6f1;
+            --paper-warm: #f5ede3;
+            --card-bg: #ffffff;
+            --text-body: #292524;
+            --text-secondary: #78716c;
+            --text-faint: #a8a29e;
+            --rust: #c2410c;
+            --rust-light: #fb923c;
+            --teal: #0d9488;
+            --teal-deep: #115e59;
+            --blue: #2563eb;
+            --purple: #7e22ce;
+            --gold: #d97706;
+            --emerald: #10b981;
+            --rose: #e11d48;
+            --border: rgba(12, 10, 9, 0.1);
+            --border-strong: rgba(12, 10, 9, 0.2);
+            --shadow-sm: 0 4px 20px rgba(12, 10, 9, 0.05);
+            --shadow-md: 0 12px 36px rgba(12, 10, 9, 0.08);
+            --code-bg: #1c1917;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--paper);
+            color: var(--text-body);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .wrap {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 clamp(20px, 4vw, 40px);
+        }
+
+        header {
+            padding: 70px 0 40px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 50px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            background: rgba(194, 65, 12, 0.1);
+            color: var(--rust);
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            color: var(--ink);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            color: var(--text-secondary);
+            max-width: 760px;
+            font-weight: 300;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem;
+            color: var(--ink);
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: clamp(24px, 4vw, 38px);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+            transition: box-shadow 0.25s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Vector Space Visualizer */
+        .vector-stage {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 28px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .vector-stage {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .canvas-container {
+            background: #141210;
+            border-radius: 16px;
+            position: relative;
+            aspect-ratio: 16/11;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .controls-panel {
+            background: var(--paper-warm);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .preset-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-body);
+            font-size: 0.92rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover, .preset-btn.active {
+            border-color: var(--rust);
+            background: #fff7ed;
+            color: var(--rust);
+            transform: translateX(4px);
+        }
+
+        .preset-btn .badge {
+            float: right;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            background: var(--paper);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Dimension Bar Visualizer */
+        .dim-strip {
+            display: flex;
+            gap: 2px;
+            height: 36px;
+            background: #1c1917;
+            padding: 4px;
+            border-radius: 8px;
+            margin: 18px 0;
+            overflow-x: auto;
+        }
+
+        .dim-cell {
+            flex: 1;
+            min-width: 4px;
+            height: 100%;
+            border-radius: 2px;
+            transition: transform 0.2s;
+        }
+
+        .dim-cell:hover {
+            transform: scaleY(1.3);
+            z-index: 10;
+        }
+
+        /* Code & Step Blocks */
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .step-box {
+            background: var(--paper-warm);
+            border-radius: 14px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--rust);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .step-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--ink);
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: #e7e5e4;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(12, 10, 9, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--rust);
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .metric-pill {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #334155;
+            margin: 3px 2px;
+        }
+
+        .highlight-box {
+            background: #fffbeb;
+            border-left: 4px solid var(--gold);
+            padding: 18px 22px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div class="tag">Semantic Search Engine • Stage 3</div>
+            <h1>Query Embeddings & Vector Space Alignment</h1>
+            <p class="subtitle">
+                Why we cannot compare string queries directly to document matrices, and how SentenceTransformer projects search intents into the exact same 384-dimensional embedding manifold.
+            </p>
+        </header>
+
+        <!-- Section 1: The Core Concept -->
+        <section class="card">
+            <h2 class="section-title">1. The Coordinate Alignment Problem</h2>
+            <p class="section-desc">
+                In BM25 keyword search, queries and documents are compared by matching surface-level tokens. In semantic search, 5,000 documents already exist as 5,000 vectors in $\mathbb{R}^{384}$. A raw string cannot be mathematically multiplied with a vector matrix until it is projected into that exact same coordinate space.
+            </p>
+
+            <div class="vector-stage">
+                <div class="canvas-container">
+                    <canvas id="vectorCanvas"></canvas>
+                </div>
+
+                <div class="controls-panel">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px; color: var(--ink);">Test Query Projection</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                        Click a query below to see how SentenceTransformer projects it into the manifold relative to document clusters:
+                    </p>
+
+                    <button class="preset-btn active" onclick="selectQuery('funny bear movies', [-0.072, -0.014, 0.001], [160, 240], 'Comedy / Animated')">
+                        "funny bear movies"
+                        <span class="badge">Query 1</span>
+                    </button>
+                    <button class="preset-btn" onclick="selectQuery('FUNNY bear MOVIES', [-0.072, -0.014, 0.001], [160, 240], 'Comedy / Animated')">
+                        "FUNNY bear MOVIES"
+                        <span class="badge">Cased</span>
+                    </button>
+                    <button class="preset-btn" onclick="selectQuery('scary dinosaur', [-0.101, 0.038, -0.028], [340, 90], 'Horror / Thriller')">
+                        "scary dinosaur"
+                        <span class="badge">Query 2</span>
+                    </button>
+                    <button class="preset-btn" onclick="selectQuery('paddington travels to london', [-0.065, -0.021, 0.015], [175, 230], 'Doc #412')">
+                        "paddington travels..."
+                        <span class="badge">Match</span>
+                    </button>
+
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+                        <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">
+                            Active Vector Slice (First 3 of 384 Dims)
+                        </div>
+                        <div id="activeVectorDisplay" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; color: var(--rust); font-weight: 600;">
+                            [-0.072, -0.014, 0.001]
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>Why "FUNNY bear MOVIES" and "funny bear movies" produce identical vectors:</strong>
+                Modern transformer models like <code>all-MiniLM-L6-v2</code> are token-level neural networks that normalize casing and recognize semantics beyond surface characters. No custom lowercasing or stemming regex is required—just basic whitespace validation.
+            </div>
+        </section>
+
+        <!-- Section 2: Dimension Inspection -->
+        <section class="card">
+            <h2 class="section-title">2. Inside the 384-Dimensional Array</h2>
+            <p class="section-desc">
+                Every query is encoded into a 1D NumPy array with shape <code>(384,)</code> and <code>float32</code> values between -1.0 and +1.0. Here is an interactive heatmap of the 384 dimensions for the current query:
+            </p>
+
+            <div class="dim-strip" id="heatmapStrip">
+                <!-- Dynamically generated 384 cells -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">
+                <span>Dimension 0</span>
+                <span>Dimension 192</span>
+                <span>Dimension 383</span>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px;">
+                <span class="metric-pill">Target Model: all-MiniLM-L6-v2</span>
+                <span class="metric-pill">Embedding Shape: (384,)</span>
+                <span class="metric-pill">Output Dtype: float32</span>
+                <span class="metric-pill">Normalized Norm: ||v|| ≈ 1.0</span>
+            </div>
+        </section>
+
+        <!-- Section 3: Architecture Breakdown -->
+        <section class="card">
+            <h2 class="section-title">3. Assignment Implementation Blueprint</h2>
+            <p class="section-desc">
+                The assignment requires wiring two specific layers together: the core library helper and the CLI command parser.
+            </p>
+
+            <div class="flow-grid">
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div class="step-title">In <code>cli/lib/semantic_search.py</code></div>
+                    <p style="font-size: 0.92rem; color: var(--text-secondary);">
+                        Create the high-level helper function <code>embed_query_text(query)</code>:
+                    </p>
+                    <pre><code>def embed_query_text(query: str):
+    search = SemanticSearch()
+    embedding = search.generate_embedding(query)
+    print(f"Query: {query}")
+    print(f"First 3 dimensions: {embedding[:3]}")
+    print(f"Shape: {embedding.shape}")</code></pre>
+                    <ul style="margin-top: 14px; font-size: 0.88rem; color: var(--text-body); padding-left: 20px;">
+                        <li>Reuses existing <code>generate_embedding()</code></li>
+                        <li>Empty queries are rejected automatically</li>
+                        <li>Exact stdout format expected by Boot.dev test suite</li>
+                    </ul>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div class="step-title">In <code>cli/semantic_search_cli.py</code></div>
+                    <p style="font-size: 0.92rem; color: var(--text-secondary);">
+                        Add the CLI subcommand <code>embed_query</code> using <code>argparse</code>:
+                    </p>
+                    <pre><code># 1. Import helper
+from lib.semantic_search import embed_query_text
+
+# 2. Register subparser
+embed_query_parser = subparsers.add_parser(
+    "embed_query", help="Embed search query"
+)
+embed_query_parser.add_argument(
+    "query", type=str, help="Query string"
+)
+
+# 3. Handle command match
+case "embed_query":
+    embed_query_text(args.query)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Verification Checklist -->
+        <section class="card">
+            <h2 class="section-title">4. Verification & Testing Commands</h2>
+            <p class="section-desc">
+                Run the local verification commands in your terminal to ensure exact stdout matching before submitting:
+            </p>
+
+            <pre><code># 1. Test standard query
+uv run cli/semantic_search_cli.py embed_query "funny bear movies"
+# Expected stdout:
+# Query: funny bear movies
+# First 3 dimensions: [-0.072... -0.014... 0.001...]
+# Shape: (384,)
+
+# 2. Test case-insensitivity
+uv run cli/semantic_search_cli.py embed_query "FUNNY bear MOVIES"
+# Expected stdout: exact same numbers
+
+# 3. Test contrasting query
+uv run cli/semantic_search_cli.py embed_query "scary dinosaur"
+# Expected stdout contains -0.101, 0.038, -0.028
+
+# 4. Submit via Boot.dev CLI
+bootdev run -s a7f863e6-73e8-4a33-a8ad-08e9f7ced8b7</code></pre>
+        </section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('vectorCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+            drawSpace();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        let activeQuery = {
+            name: "funny bear movies",
+            coords: [160, 240],
+            dims: [-0.072, -0.014, 0.001],
+            cluster: "Comedy / Animated"
+        };
+
+        const docClusters = [
+            { name: "Family & Animated (e.g. Paddington, Ted)", x: 170, y: 250, color: "#38bdf8", count: 24 },
+            { name: "Horror & Dinosaurs (e.g. Jurassic, Carnosaur)", x: 350, y: 90, color: "#f87171", count: 18 },
+            { name: "Documentaries (e.g. Grizzly Man)", x: 140, y: 140, color: "#fbbf24", count: 12 },
+            { name: "Action & Sci-Fi", x: 280, y: 280, color: "#a78bfa", count: 35 }
+        ];
+
+        function drawSpace() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const scaleX = w / 450;
+            const scaleY = h / 350;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Subtle Grid
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < w; x += 40 * scaleX) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 40 * scaleY) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+
+            // Document Clusters (Representing 5,000 document matrix points)
+            docClusters.forEach(cluster => {
+                ctx.fillStyle = cluster.color + "22";
+                ctx.beginPath();
+                ctx.arc(cluster.x * scaleX, cluster.y * scaleY, 45 * scaleX, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Scatter points
+                for (let i = 0; i < cluster.count; i++) {
+                    const angle = i * 2.399;
+                    const r = Math.sqrt(i / cluster.count) * 36 * scaleX;
+                    const px = cluster.x * scaleX + Math.cos(angle) * r;
+                    const py = cluster.y * scaleY + Math.sin(angle) * r;
+
+                    ctx.fillStyle = cluster.color;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.font = `${Math.max(10, 11 * scaleX)}px 'DM Sans', sans-serif`;
+                ctx.fillText(cluster.name, (cluster.x - 30) * scaleX, (cluster.y + 55) * scaleY);
+            });
+
+            // Draw line from Query to nearest cluster
+            const targetX = activeQuery.coords[0] * scaleX;
+            const targetY = activeQuery.coords[1] * scaleY;
+
+            ctx.strokeStyle = "#fb923c";
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(w / 2, h); // Origin
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Active Query Marker
+            ctx.fillStyle = "#ea580c";
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, 9 * scaleX, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, 4 * scaleX, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Query Label
+            ctx.fillStyle = "#ffffff";
+            ctx.font = `bold ${Math.max(12, 13 * scaleX)}px 'JetBrains Mono', monospace`;
+            ctx.fillText(`Query: "${activeQuery.name}"`, targetX + 14, targetY + 4);
+        }
+
+        function selectQuery(name, dims, coords, cluster) {
+            activeQuery = { name, dims, coords, cluster };
+            document.querySelectorAll('.preset-btn').forEach(b => {
+                if (b.innerText.includes(name)) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            document.getElementById('activeVectorDisplay').innerText = `[${dims.map(d => d.toFixed(3)).join(', ')}]`;
+            generateHeatmap(dims);
+            drawSpace();
+        }
+
+        function generateHeatmap(baseDims) {
+            const strip = document.getElementById('heatmapStrip');
+            strip.innerHTML = '';
+            for (let i = 0; i < 384; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'dim-cell';
+                let val;
+                if (i < 3) val = baseDims[i];
+                else {
+                    // pseudo-random deterministic variation for visual realism
+                    val = Math.sin(i * 12.9898 + baseDims[0] * 50) * 0.12;
+                }
+                const normalized = (val + 0.15) / 0.3; // normalize around [-0.15, 0.15]
+                const hue = val >= 0 ? 25 : 210; // warm for positive, cool for negative
+                const alpha = Math.min(1, Math.abs(val) * 8 + 0.15);
+                cell.style.background = `hsla(${hue}, 85%, 55%, ${alpha})`;
+                cell.title = `Dim ${i}: ${val.toFixed(4)}`;
+                strip.appendChild(cell);
+            }
+        }
+
+        // Init
+        setTimeout(() => {
+            resizeCanvas();
+            generateHeatmap([-0.072, -0.014, 0.001]);
+        }, 100);
+    </script>
+</body>
+</html>

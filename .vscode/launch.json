@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug current file",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/cli" },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Keyword CLI: bm25search",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "args": ["bm25search", "dinosaur", "--limit", "5"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/cli" },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Keyword CLI: idf",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "args": ["idf", "dinosaur"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/cli" },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Semantic CLI: embed_text",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/semantic_search_cli.py",
+      "args": ["embed_text", "a bear who loves marmalade"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/cli" },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Pytest: all tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["cli/tests", "-q"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}/cli" },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}
